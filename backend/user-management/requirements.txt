@@ -1,0 +1,15 @@
+# Requisitos generales para FastAPI
+fastapi==0.110.0
+uvicorn[standard]==0.29.0
+
+# Para PostgreSQL (user-management)
+sqlalchemy==2.0.29
+psycopg2-binary==2.9.9
+
+# Validación y esquemas
+pydantic==2.6.4
+
+# Seguridad y autenticación (opcional, si usas JWT por ejemplo)
+python-jose==3.3.0
+passlib[bcrypt]==1.7.4
+pyjwt
