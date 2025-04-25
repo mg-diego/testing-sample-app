@@ -1,6 +1,7 @@
 import pandas as pd
 import streamlit as st
 import streamlit_antd_components as sac
+from streamlit_card import card
 from common.jwt_utils import verify_permission, verify_token
 from common.permissions import Permissions
 
@@ -60,7 +61,7 @@ st.markdown("""
     </style>
 
     <div class="footer">
-        <a href="https://github.com/mg-diego/timeline-explorer" target="_blank"
+        <a href="https://github.com/mg-diego/testing-sample-app" target="_blank"
                 class="text-decoration-none d-inline-flex align-items-center">
                 <img src="https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png" alt="GitHub"
                     width="16" height="16" class="me-1" />
@@ -90,8 +91,52 @@ def show_web():
     if menu_id == "Homepage":
         st.header(f"{WEB_TITLE} - Homepage")
 
+        st.markdown("""
+            <h2>Welcome to the Testing App!</h2>
+            <p>This application allows you to test and interact with various functionalities seamlessly. Below is an overview of the features:</p>
+            <ul>
+                <li><strong>User Management</strong>: Manage users, view user lists, and create new users with different permissions.</li>
+                <li><strong>Language Selector</strong>: Choose your preferred language (English, Español, Français, etc.) to customize your experience.</li>
+                <li><strong>Testing API Endpoints</strong>: Test API calls and interact with dynamic data.</li>
+                <li><strong>Real-time Data</strong>: View real-time information from integrated services and APIs.</li>
+            </ul>
+            <p>Whether you're verifying user roles or experimenting with our services, this app provides a straightforward interface to perform and visualize testing tasks.</p>
+        """, unsafe_allow_html=True)
+        
+
     if menu_id == "Catalog":
         st.header(f"{WEB_TITLE} - (WIP) Catalog")
+
+        filter_col1, filter_col2 = st.columns([1, 1])
+        with filter_col1:            
+            st.text_input(label="Filter:", placeholder="Filter by specific value...")
+            st.button("Filter", type="primary")
+
+        col1, col2, col3 = st.columns(3)
+
+        with col1:
+            card(
+                title="Hello World!",
+                text="Some description",
+                image="https://placecats.com/100/200",
+                url="https://github.com/gamcoh/st-card"
+            )
+
+        with col2:
+            card(
+                title="Hello World!",
+                text="Some description",
+                image="https://placecats.com/200/200",
+                url="https://github.com/gamcoh/st-card"
+            )
+
+        with col3:
+            card(
+                title="Hello World!",
+                text="Some description",
+                image="https://placecats.com/300/200",
+                url="https://github.com/gamcoh/st-card"
+            )
 
     if menu_id == "User Management":
         st.header(f"{WEB_TITLE} - User Management")
@@ -225,7 +270,7 @@ def show_web():
                 st.write("The current user has no permission to delete users.")
 
     if menu_id == "Language":
-        st.header(f"{WEB_TITLE} - Language")
+        st.header(f"{WEB_TITLE} - (WIP) Language")
 
         with st.form("Select language"):
             st.subheader("(WIP) Select Language")
