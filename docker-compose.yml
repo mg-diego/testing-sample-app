@@ -29,13 +29,22 @@ services:
       - app_network
 
   catalog-management:
-    build: ./backend/catalog-management
+    image: catalog-management-service
     ports:
       - "8002:8002"
     depends_on:
       - mongo
     networks:
       - app_network
+
+  #language-management:
+  #  image: language-management-service
+  #  ports:
+  #    - "8003:8003"
+  #  depends_on:
+  #    - postgres
+  #  networks:
+  #    - app_network
 
   ui:
     image: ui-service

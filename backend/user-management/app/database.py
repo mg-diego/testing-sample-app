@@ -23,7 +23,7 @@ class UserManagementDatabase:
 
     def get_user(self, username: str) -> Optional[Dict]:
         """Obtiene los datos de un usuario por su nombre de usuario."""
-        query = sql.SQL("SELECT id, username, password, permissions FROM public.users WHERE username = %s;")
+        query = sql.SQL("SELECT username, password, permissions FROM public.users WHERE username = %s;")
         
         try:
             conn = self.get_connection()
@@ -32,10 +32,9 @@ class UserManagementDatabase:
                 user_data = cursor.fetchone()  # Devuelve la primera fila
                 if user_data:
                     return {
-                        "id": user_data[0],
-                        "username": user_data[1],
-                        "password": user_data[2],
-                        "permissions": user_data[3]
+                        "username": user_data[0],
+                        "password": user_data[1],
+                        "permissions": user_data[2]
                     }
                 return None  # Si no se encuentra el usuario
         except Exception as e:
@@ -45,7 +44,7 @@ class UserManagementDatabase:
                 conn.close()
 
     def get_user_list(self) -> Optional[List[Dict]]:
-        query = sql.SQL("SELECT id, username, password, permissions FROM public.users;")
+        query = sql.SQL("SELECT username, password, permissions FROM public.users;")
         users = []
         conn = None
         try:
@@ -55,10 +54,9 @@ class UserManagementDatabase:
                 user_data = cursor.fetchall()
                 for row in user_data:
                     users.append({
-                        "id": row[0],
-                        "username": row[1],
-                        "password": row[2],
-                        "permissions": row[3]
+                        "username": row[0],
+                        "password": row[1],
+                        "permissions": row[2]
                     })
             return users if users else None
         except Exception as e:
@@ -68,7 +66,7 @@ class UserManagementDatabase:
             if conn:
                 conn.close()
 
-    def create_user(self, username: str, password: str, permissions: str) -> bool:
+    def create_user(self, username: str, password: str, permissions: str):
         """Crea un nuevo usuario en la base de datos."""
         query = sql.SQL("""
             INSERT INTO public.users (username, password, permissions)
@@ -80,9 +78,34 @@ class UserManagementDatabase:
             with conn.cursor() as cursor:
                 cursor.execute(query, (username, password, permissions))
                 conn.commit()  # Realiza la transacción
-                return True
+                return {
+                        "username": username,
+                        "password": password,
+                        "permissions": permissions
+                    }
         except Exception as e:
             print(f"Error al crear el usuario: {e}")
+            return False
+        finally:
+            if conn:
+                conn.close()
+
+    def delete_user(self, username: str) -> bool:
+        """Borra un usuario en la base de datos."""
+        query = sql.SQL("""
+            DELETE FROM public.users
+            WHERE username = %s;
+        """)
+
+        conn = None
+        try:
+            conn = self.get_connection()
+            with conn.cursor() as cursor:
+                cursor.execute(query, (username,))
+                conn.commit()
+                return True
+        except Exception as e:
+            print(f"Error al borrar el usuario: {e}")
             return False
         finally:
             if conn:

@@ -1,17 +1,11 @@
 # Imagen base oficial de Python
 FROM python:3.11-slim
 
-# Establece directorio de trabajo
+# Crear directorio y copiar /app
 WORKDIR /app
-
-# Copia los requirements
-COPY requirements.txt .
-
-# Instala dependencias
-RUN pip install --no-cache-dir -r requirements.txt
-
-# Copia el código fuente
-COPY . .
+COPY backend/catalog-management/app ./app
+COPY backend/catalog-management/requirements.txt ./app/requirements.txt
+RUN pip install -r ./app/requirements.txt
 
 # Expone el puerto por defecto del microservicio
 EXPOSE 8002
