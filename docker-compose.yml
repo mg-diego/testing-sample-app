@@ -37,14 +37,14 @@ services:
     networks:
       - app_network
 
-  #language-management:
-  #  image: language-management-service
-  #  ports:
-  #    - "8003:8003"
-  #  depends_on:
-  #    - postgres
-  #  networks:
-  #    - app_network
+  language-management:
+    image: language-management-service
+    ports:
+      - "8003:8003"
+    depends_on:
+      - postgres
+    networks:
+      - app_network
 
   ui:
     image: ui-service
@@ -53,6 +53,7 @@ services:
     depends_on:
       - user-management
       - catalog-management
+      - language-management
     networks:
       - app_network
 

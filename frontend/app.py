@@ -4,6 +4,7 @@ import streamlit_antd_components as sac
 from streamlit_card import card
 from common.jwt_utils import verify_permission, verify_token
 from common.permissions import Permissions
+from translations_service import get_translation, update_translations
 
 import requests
 
@@ -17,6 +18,7 @@ WEB_TITLE = "🕵️ TESTING SAMPLE APP"
 
 CATALOG_API_BASE_URL = "catalog-management" if ENVIRONMENT == "DOCKER" else "localhost"
 USER_MANAGEMENT_API_BASE_URL = "user-management" if ENVIRONMENT == "DOCKER" else "localhost"
+LANGUAGE_MANAGEMENT_API_BASE_URL = "language-management" if ENVIRONMENT == "DOCKER" else "localhost"
 
 st.set_page_config(page_title=WEB_TITLE, layout="wide")
 st.markdown("""
@@ -79,7 +81,7 @@ def show_web():
         menu_items.append(sac.MenuItem('User Management'))
 
     menu_items.append(sac.MenuItem('Language'))
-    menu_items.append(sac.MenuItem('Exit'))
+    menu_items.append(sac.MenuItem('Logout'))
 
     with st.sidebar:
         menu_id = sac.menu(
@@ -92,7 +94,7 @@ def show_web():
         st.header(f"{WEB_TITLE} - Homepage")
 
         st.markdown("""
-            <h2>Welcome to the Testing App!</h2>
+            <h2>Welcome to the Testing Sample App!</h2>
             <p>This application allows you to test and interact with various functionalities seamlessly. Below is an overview of the features:</p>
             <ul>
                 <li><strong>User Management</strong>: Manage users, view user lists, and create new users with different permissions.</li>
@@ -177,6 +179,7 @@ def show_web():
                         access_catalog_permission = st.checkbox(Permissions.ACCESS_CATALOG_MANAGEMENT.name, help="Allows to navigate to the 'Catalog' menu")
                         access_user_management_permission = st.checkbox(Permissions.ACCESS_USER_MANAGEMENT.name, help="Allows to navigate to the 'User Management' menu")
                         create_catalog_permission = st.checkbox(Permissions.CREATE_CATALOG.name, help="Allows to create a new catalog.")
+                        set_language_permission = st.checkbox(Permissions.SET_LANGUAGE.name, help="Allows set the web language.")
 
                     with col2:
                         read_users_permission = st.checkbox(Permissions.READ_USERS.name, help="Allows to read the list of users.")
@@ -192,6 +195,7 @@ def show_web():
                             access_catalog_permission,
                             access_user_management_permission,
                             create_catalog_permission,
+                            set_language_permission,
                             read_users_permission,
                             create_users_permission,
                             delete_users_permission
@@ -225,6 +229,8 @@ def show_web():
                                 permissions.append(Permissions.CREATE_USERS.name)
                             if delete_users_permission:
                                 permissions.append(Permissions.DELETE_USERS.name)
+                            if set_language_permission:
+                                permissions.append(Permissions.SET_LANGUAGE.name)
 
                             headers = {
                                 "Authorization": "Bearer " + st.session_state["access_token"]
@@ -270,13 +276,18 @@ def show_web():
                 st.write("The current user has no permission to delete users.")
 
     if menu_id == "Language":
-        st.header(f"{WEB_TITLE} - (WIP) Language")
+        st.header(f'{WEB_TITLE} - (WIP) {get_translation("tab.header.language")}')
 
         with st.form("Select language"):
             st.subheader("(WIP) Select Language")
 
+            def get_language_code(language_name, languages):
+                for language in languages:
+                    if language[0] == language_name:
+                        return language[1]
+
             languages = [
-                ("🇬🇧 English", "gb"),
+                ("🇬🇧 English", "en"),
                 ("🇪🇸 Español", "es"),
                 ("🇫🇷 Français", "fr"),
                 ("🇵🇹 Português", "pt"),
@@ -293,10 +304,16 @@ def show_web():
             submitted = st.form_submit_button("Submit")
 
             if submitted:
-                st.success(f"You selected: {selected_language}")
+                headers = {
+                    "Authorization": "Bearer " + st.session_state["access_token"]
+                }
+                response = requests.post(f"http://{LANGUAGE_MANAGEMENT_API_BASE_URL}:8003/language/?language={get_language_code(selected_language, languages)}", headers=headers).json()
+                if response:
+                    update_translations(requests.get(f"http://{LANGUAGE_MANAGEMENT_API_BASE_URL}:8003/language/translations").json())
+                    st.experimental_rerun()          
 
 
-    if menu_id == "Exit":
+    if menu_id == "Logout":
         st.session_state.clear()
         st.rerun()
     
@@ -309,14 +326,14 @@ def login():
 
     with col2:
         st.header("🕵️ TESTING SAMPLE APP")
-        st.markdown(f'<small style="color: gray;">(Default user: admin / admin)</small>', unsafe_allow_html=True)
+        st.markdown(f'<small style="color: gray;">({get_translation("login.defaultUser")} admin / admin)</small>', unsafe_allow_html=True)
 
-        username = st.text_input("Username")
-        password = st.text_input("Password", type="password")
+        username = st.text_input(get_translation('login.username'))
+        password = st.text_input(get_translation('login.password'), type="password")
         
-        if st.button("Login", type="primary"):
+        if st.button(get_translation("login.loginButton"), type="primary"):
             try:
-                with st.spinner("Wait for it..."):
+                with st.spinner(get_translation("login.spinnerWait")):
                     res = requests.post(f"http://{USER_MANAGEMENT_API_BASE_URL}:8001/login/?username={username}&password={password}")
                     if res.ok:
                         response_content = res.json()
@@ -329,6 +346,7 @@ def login():
                 st.error(e, icon="⚠️")
 
 if "access_token" not in st.session_state:
+    update_translations(requests.get(f"http://{LANGUAGE_MANAGEMENT_API_BASE_URL}:8003/language/translations").json())
     login()
 
 if "access_token" in st.session_state:    

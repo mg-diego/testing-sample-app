@@ -1,0 +1,8 @@
+{
+    "login.defaultUser": "Utilisateur par défaut :",
+    "login.username": "Nom d'utilisateur",
+    "login.password": "Mot de passe",
+    "login.loginButton": "Connexion",
+    "login.spinnerWait": "Veuillez patienter...",
+    "tab.header.language": "Langue"
+}

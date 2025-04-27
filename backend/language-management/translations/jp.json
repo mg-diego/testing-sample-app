@@ -1,0 +1,8 @@
+{
+    "login.defaultUser": "デフォルトユーザー：",
+    "login.username": "ユーザー名",
+    "login.password": "パスワード",
+    "login.loginButton": "ログイン",
+    "login.spinnerWait": "お待ちください...",
+    "tab.header.language": "言語"
+}

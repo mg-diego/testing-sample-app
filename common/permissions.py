@@ -7,3 +7,4 @@ class Permissions(Enum):
     CREATE_USERS = 4
     DELETE_USERS = 5
     CREATE_CATALOG = 6
+    SET_LANGUAGE = 7
