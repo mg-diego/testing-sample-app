@@ -1,0 +1,42 @@
+name: Docker Build and Push
+
+on:
+  push:
+    branches:
+      - main  # Trigger on pushes to the 'main' branch
+
+jobs:
+  build_and_push:
+    runs-on: windows-latest  # Use a Windows runner to execute PowerShell script
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2  # Checkout the repo
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1  # Set up Buildx for advanced Docker functionality
+
+      - name: Log in to DockerHub
+        uses: docker/login-action@v2  # Log in to Docker registry (Docker Hub in this case)
+        with:
+          username: diegomartinezgilabert
+          password: ${{ secrets.DOCKER_LOGIN_PASSWORD }}
+
+      - name: Docker Build script
+        shell: pwsh
+        run: |
+          .\docker-build-local.ps1
+
+      - name: Tag Docker image
+        run: |
+          docker tag user-management-service:latest diegomartinezgilabert/testing-sample-app:be-user-management-service-1.0
+          docker tag catalog-management-service:latest diegomartinezgilabert/testing-sample-app:be-catalog-management-service-1.0
+          docker tag language-management-service:latest diegomartinezgilabert/testing-sample-app:be-language-management-service-1.0
+          docker tag ui-service:latest diegomartinezgilabert/testing-sample-app:fe-ui-service-1.0
+
+      - name: Push Docker images
+        run: |
+          docker push diegomartinezgilabert/testing-sample-app:be-user-management-service-1.0
+          docker push diegomartinezgilabert/testing-sample-app:be-catalog-management-service-1.0
+          docker push diegomartinezgilabert/testing-sample-app:be-language-management-service-1.0
+          docker push diegomartinezgilabert/testing-sample-app:fe-ui-service-1.0

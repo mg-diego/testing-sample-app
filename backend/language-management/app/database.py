@@ -7,7 +7,7 @@ class LanguageManagementDatabase:
         # Configuración de la base de datos
         self.db_host = "postgres"
         self.db_port = "5432"
-        self.db_name = "languages"
+        self.db_name = "testing-sample-app"
         self.db_user = "user"
         self.db_password = "password"
 
