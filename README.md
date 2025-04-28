@@ -2,7 +2,7 @@
 
 This is a sample application designed for testing a user management system with microservices. The application is built to allow user creation, viewing, and deletion, implemented using **FastAPI** for the backend and **Streamlit** for the frontend.
 
-## Project Structure
+## Project Structure 
 
 The application is divided into microservices and frontend:
 
