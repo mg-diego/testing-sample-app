@@ -73,15 +73,15 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 def show_web():
-    menu_items = [sac.MenuItem('Homepage')]
+    menu_items = [sac.MenuItem(get_translation('menu.homepage'))]
     if verify_permission(Permissions.ACCESS_CATALOG_MANAGEMENT, st.session_state["access_token"]):
-        menu_items.append(sac.MenuItem('Catalog'))
+        menu_items.append(sac.MenuItem(get_translation('menu.catalog')))
 
     if verify_permission(Permissions.ACCESS_USER_MANAGEMENT, st.session_state["access_token"]):
-        menu_items.append(sac.MenuItem('User Management'))
+        menu_items.append(sac.MenuItem(get_translation('menu.userManagement')))
 
-    menu_items.append(sac.MenuItem('Language'))
-    menu_items.append(sac.MenuItem('Logout'))
+    menu_items.append(sac.MenuItem(get_translation('menu.language')))
+    menu_items.append(sac.MenuItem(get_translation('menu.logout')))
 
     with st.sidebar:
         menu_id = sac.menu(
@@ -90,29 +90,28 @@ def show_web():
             index=0,
         )
         
-    if menu_id == "Homepage":
-        st.header(f"{WEB_TITLE} - Homepage")
+    if menu_id == get_translation('menu.homepage'):
+        st.header(f"{WEB_TITLE} - {get_translation('menu.homepage')}")
 
-        st.markdown("""
-            <h2>Welcome to the Testing Sample App!</h2>
-            <p>This application allows you to test and interact with various functionalities seamlessly. Below is an overview of the features:</p>
+        st.markdown(f"""
+            <h2>{get_translation('homepage.header')} Testing Sample App!</h2>
+            <p>{get_translation('homepage.paragraph1')}</p>
             <ul>
-                <li><strong>User Management</strong>: Manage users, view user lists, and create new users with different permissions.</li>
-                <li><strong>Language Selector</strong>: Choose your preferred language (English, Español, Français, etc.) to customize your experience.</li>
-                <li><strong>Testing API Endpoints</strong>: Test API calls and interact with dynamic data.</li>
-                <li><strong>Real-time Data</strong>: View real-time information from integrated services and APIs.</li>
+                <li><strong>{get_translation('homepage.feature1.name')}</strong>: {get_translation('homepage.feature1.description')}</li>
+                <li><strong>{get_translation('homepage.feature2.name')}</strong>: {get_translation('homepage.feature2.description')}</li>
+                <li><strong>{get_translation('homepage.feature3.name')}</strong>: {get_translation('homepage.feature2.description')}</li>
+                <li><strong>{get_translation('homepage.feature4.name')}</strong>: {get_translation('homepage.feature2.description')}</li>
             </ul>
-            <p>Whether you're verifying user roles or experimenting with our services, this app provides a straightforward interface to perform and visualize testing tasks.</p>
+            <p>{get_translation('homepage.paragraph2')}</p>
         """, unsafe_allow_html=True)
         
-
-    if menu_id == "Catalog":
-        st.header(f"{WEB_TITLE} - (WIP) Catalog")
+    if menu_id == get_translation('menu.catalog'):
+        st.header(f"{WEB_TITLE} - (WIP) {get_translation('menu.catalog')}")
 
         filter_col1, filter_col2 = st.columns([1, 1])
         with filter_col1:            
-            st.text_input(label="Filter:", placeholder="Filter by specific value...")
-            st.button("Filter", type="primary")
+            st.text_input(label=get_translation('catalog.filter.label'), placeholder=get_translation('catalog.filter.placeholder'))
+            st.button(get_translation('catalog.filter.label'), type="primary")
 
         col1, col2, col3 = st.columns(3)
 
@@ -140,14 +139,18 @@ def show_web():
                 url="https://github.com/gamcoh/st-card"
             )
 
-    if menu_id == "User Management":
-        st.header(f"{WEB_TITLE} - User Management")
-        refresh_button = st.button("Refresh Data")
+    if menu_id == get_translation('menu.userManagement'):
+        st.header(f"{WEB_TITLE} - {get_translation('menu.userManagement')}")
+        refresh_button = st.button(get_translation("userManagement.refreshDataButton"))
 
         if refresh_button:
             st.experimental_rerun()
 
-        tab1, tab2, tab3 = st.tabs(["List of Users", "Create User", "Delete User"])
+        tab1, tab2, tab3 = st.tabs([
+            get_translation("userManagement.tab.listOfUsers"),
+            get_translation("userManagement.tab.createUser"),
+            get_translation("userManagement.tab.deleteUser")
+        ])
 
         with tab1:
             if verify_permission(Permissions.READ_USERS, st.session_state["access_token"]):
@@ -157,37 +160,35 @@ def show_web():
                 response = requests.get(f"http://{USER_MANAGEMENT_API_BASE_URL}:8001/users", headers=headers)
 
                 df = pd.DataFrame(response.json())
-
-                st.write("### Users Table")
                 st.dataframe(df, use_container_width=True)
             else:
-                st.write("The current user has no permission to read users.")
+                st.write(get_translation("userManagement.listOfUsers.noPermission"))
 
         with tab2:
             if verify_permission(Permissions.CREATE_USERS, st.session_state["access_token"]):
                 with st.form("user_form", clear_on_submit=True):
-                    st.subheader("Create User")
+                    st.subheader(get_translation("userManagement.createUser.subheader"))
 
-                    username = st.text_input("Username")
-                    password = st.text_input("Password", type="password")
-                    repeat_password = st.text_input("Repeat Password", type="password")
+                    username = st.text_input(get_translation("login.username"))
+                    password = st.text_input(get_translation("login.password"), type="password")
+                    repeat_password = st.text_input(get_translation("userManagement.createUser.form.repeatPassword"), type="password")
 
-                    st.markdown("### Permissions")
+                    st.markdown(f"### {get_translation('userManagement.createUser.form.permissions')}")
                     col1, col2 = st.columns(2)
 
                     with col1:
-                        access_catalog_permission = st.checkbox(Permissions.ACCESS_CATALOG_MANAGEMENT.name, help="Allows to navigate to the 'Catalog' menu")
-                        access_user_management_permission = st.checkbox(Permissions.ACCESS_USER_MANAGEMENT.name, help="Allows to navigate to the 'User Management' menu")
-                        create_catalog_permission = st.checkbox(Permissions.CREATE_CATALOG.name, help="Allows to create a new catalog.")
-                        set_language_permission = st.checkbox(Permissions.SET_LANGUAGE.name, help="Allows set the web language.")
+                        access_catalog_permission = st.checkbox(Permissions.ACCESS_CATALOG_MANAGEMENT.name, help=get_translation("userManagement.createUser.form.accessCatalog.info"))
+                        access_user_management_permission = st.checkbox(Permissions.ACCESS_USER_MANAGEMENT.name, help=get_translation('userManagement.createUser.form.accessUserManagement.info'))
+                        create_catalog_permission = st.checkbox(Permissions.CREATE_CATALOG.name, help=get_translation('userManagement.createUser.form.createCatalog.info'))
+                        set_language_permission = st.checkbox(Permissions.SET_LANGUAGE.name, help=get_translation("userManagement.createUser.form.setLanguage.info"))
 
                     with col2:
-                        read_users_permission = st.checkbox(Permissions.READ_USERS.name, help="Allows to read the list of users.")
-                        create_users_permission = st.checkbox(Permissions.CREATE_USERS.name, help="Allows to create a new user.")
-                        delete_users_permission = st.checkbox(Permissions.DELETE_USERS.name, help="Allows to delete an existing user.")
+                        read_users_permission = st.checkbox(Permissions.READ_USERS.name, help=get_translation("userManagement.createUser.form.readUsers.info"))
+                        create_users_permission = st.checkbox(Permissions.CREATE_USERS.name, help=get_translation("userManagement.createUser.form.createUsers.info"))
+                        delete_users_permission = st.checkbox(Permissions.DELETE_USERS.name, help=get_translation("userManagement.createUser.form.deleteUsers.info"))
 
                     # Submit button
-                    submitted = st.form_submit_button("Submit")
+                    submitted = st.form_submit_button(get_translation("userManagement.createUser.form.submitButton"))
 
                     if submitted:
                         error_message = ""
@@ -202,18 +203,18 @@ def show_web():
                         ]
 
                         if username == "":
-                            error_message += "\n - Username can't be empty."
+                            error_message += f"\n - {get_translation('userManagement.createUser.form.errors.usernameEmpty')}"
                         if password == "":
-                            error_message += "\n - Password can't be empty."
+                            error_message += f"\n - {get_translation('userManagement.createUser.form.errors.passwordEmpty')}"
                         if repeat_password == "":
-                            error_message += "\n - Repeat Password can't be empty."
+                            error_message += f"\n - {get_translation('userManagement.createUser.form.errors.repeatPasswordEmpty')}"
                         if password != repeat_password:
-                            error_message += "\n - Passwords do not match."
+                            error_message += f"\n - {get_translation('userManagement.createUser.form.errors.passwordsDontMatch')}"
                         if not any(permissions):
-                            error_message += "\n - At least one permission should be assigned."
+                            error_message += f"\n - {get_translation('userManagement.createUser.form.errors.noPermissions')}"
 
                         if error_message != "":
-                            st.error(f"Please fix the following errors: {error_message}", icon="⚠️")                            
+                            st.error(f"{get_translation('userManagement.createUser.form.errors')} {error_message}", icon="⚠️")                            
 
                         else:
                             permissions = []
@@ -249,7 +250,7 @@ def show_web():
                                 st.error(response.content, icon="⚠️")
 
             else:
-                st.write("The current user has no permission to create users.")
+                st.write(get_translation('userManagement.createUser.noPermission'))
 
         with tab3:
             if verify_permission(Permissions.DELETE_USERS, st.session_state["access_token"]):
@@ -259,11 +260,11 @@ def show_web():
 
                 df = pd.DataFrame(response.json())
                 usernames = df["username"].tolist()
-                selected_user = st.selectbox("Select a user", usernames)
+                selected_user = st.selectbox(get_translation('userManagement.deleteUser.selectUser'), usernames)
 
-                if st.button("Delete", type="primary"):
+                if st.button(get_translation('userManagement.deleteUser.deleteButton'), type="primary"):
                     if selected_user == verify_token(st.session_state['access_token'])["username"]:
-                        st.warning("You can't delete your own user.", icon="⚠️")
+                        st.warning(get_translation("userManagement.deleteUser.errors.deleteOwnUser"), icon="⚠️")
                     else:
                         response = requests.delete(f"http://{USER_MANAGEMENT_API_BASE_URL}:8001/users", headers=headers, params={"username": selected_user})
                         
@@ -273,47 +274,55 @@ def show_web():
                         else:
                             st.error(response.content, icon="⚠️")
             else:
-                st.write("The current user has no permission to delete users.")
+                st.write(get_translation("userManagement.deleteUser.noPermission"))
 
-    if menu_id == "Language":
-        st.header(f'{WEB_TITLE} - (WIP) {get_translation("tab.header.language")}')
+    if menu_id == get_translation('menu.language'):
+        st.header(f"{WEB_TITLE} - {get_translation('menu.language')}")
 
         with st.form("Select language"):
-            st.subheader("(WIP) Select Language")
+            st.subheader(get_translation("language.form.header"))
+            headers = {
+                    "Authorization": "Bearer " + st.session_state["access_token"]
+            }
+            active_language = requests.get(f"http://{LANGUAGE_MANAGEMENT_API_BASE_URL}:8003/language", headers=headers).json(),
 
             def get_language_code(language_name, languages):
                 for language in languages:
                     if language[0] == language_name:
                         return language[1]
+                    
+            def get_language_index_by_code(code: str, languages: list) -> int:
+                for index, (_, lang_code) in enumerate(languages):
+                    if lang_code in code:
+                        return index
+                return -1  # Return -1 if not found          
 
             languages = [
-                ("🇬🇧 English", "en"),
-                ("🇪🇸 Español", "es"),
-                ("🇫🇷 Français", "fr"),
-                ("🇵🇹 Português", "pt"),
-                ("🇯🇵 Japonés", "jp")
+                (f"🇺🇸 {get_translation('language.form.english')}", "en"),
+                (f"🇪🇸 {get_translation('language.form.spanish')}", "es"),
+                (f"🇫🇷 {get_translation('language.form.french')}", "fr"),
+                (f"🇵🇹 {get_translation('language.form.portuguese')}", "pt"),
+                (f"🇯🇵 {get_translation('language.form.japanese')}", "jp")
             ]
                             
             selected_language = st.radio(
                 "",
                 options=[lang[0] for lang in languages],  # Flags as options
-                index=0  # Default selected item (if you want to pre-select one)
+                index=get_language_index_by_code(active_language, languages)  # Default selected item (if you want to pre-select one)
             )
 
             # Submit button
-            submitted = st.form_submit_button("Submit")
+            submitted = st.form_submit_button(get_translation("language.form.submitButton"))
 
             if submitted:
-                headers = {
-                    "Authorization": "Bearer " + st.session_state["access_token"]
-                }
+                
                 response = requests.post(f"http://{LANGUAGE_MANAGEMENT_API_BASE_URL}:8003/language/?language={get_language_code(selected_language, languages)}", headers=headers).json()
                 if response:
                     update_translations(requests.get(f"http://{LANGUAGE_MANAGEMENT_API_BASE_URL}:8003/language/translations").json())
-                    st.experimental_rerun()          
+                    st.rerun()          
 
 
-    if menu_id == "Logout":
+    if menu_id == get_translation('menu.logout'):
         st.session_state.clear()
         st.rerun()
     

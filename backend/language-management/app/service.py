@@ -11,6 +11,9 @@ def get_translations():
 def set_active_language_service(new_active_language):
     return language_management_database.set_active_language(new_active_language)
 
+def get_active_language_service():
+    return language_management_database.get_active_language()
+
 def read_json_file(folder, filename):
     base_dir = os.path.dirname(os.path.abspath(__file__))
     path = os.path.join(base_dir, folder, filename)

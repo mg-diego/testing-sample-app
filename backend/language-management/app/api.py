@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from common.jwt_utils import verify_permission
 from common.permissions import Permissions
-from .service import get_translations, set_active_language_service
+from .service import get_translations, set_active_language_service, get_active_language_service
 
 import logging
 
@@ -25,6 +25,21 @@ def get_language_translations():
     response = get_translations()
     logger.info(f"[GET /language/translations/] - Translations retrieved: {response}")
     return response
+
+@app.get("/language/")
+def set_language(authorization: str = Header(...)):
+    token = authorization.split(" ")[1]    
+    if verify_permission(Permissions.SET_LANGUAGE, token):
+        active_language = get_active_language_service()
+        if active_language is None:
+            raise HTTPException(status_code=404, detail="Active language not found.")
+        else:
+            logger.info(f"[GET /language/] - Active language is: {active_language}")
+            return active_language
+
+    else:
+        logger.warning(f"[GET /language/] - Permission denied. Token: {token}")
+        raise HTTPException(status_code=401, detail="Missing permission.")
     
 
 @app.post("/language/")
