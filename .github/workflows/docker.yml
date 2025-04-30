@@ -30,6 +30,7 @@ jobs:
           docker tag catalog-management-service:latest diegomartinezgilabert/testing-sample-app:be-catalog-management-service-1.0
           docker tag language-management-service:latest diegomartinezgilabert/testing-sample-app:be-language-management-service-1.0
           docker tag ui-service:latest diegomartinezgilabert/testing-sample-app:fe-ui-service-1.0
+          docker tag db-postgres:latest diegomartinezgilabert/testing-sample-app:db-postgres-1.0
 
       - name: Push Docker images
         run: |
@@ -37,3 +38,4 @@ jobs:
           docker push diegomartinezgilabert/testing-sample-app:be-catalog-management-service-1.0
           docker push diegomartinezgilabert/testing-sample-app:be-language-management-service-1.0
           docker push diegomartinezgilabert/testing-sample-app:fe-ui-service-1.0
+          docker push diegomartinezgilabert/testing-sample-app:db-postgres-1.0

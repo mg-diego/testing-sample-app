@@ -6,9 +6,25 @@ DB_PORT=${DB_PORT:-5432}
 DB_USER=${DB_USER:-user}
 DB_NAME="testing-sample-app"
 DB_PASSWORD=${DB_PASSWORD:-password}
+MAX_RETRIES=30
+RETRY_INTERVAL=2
 
 # Set the password for the session
 export PGPASSWORD="$DB_PASSWORD"
+
+echo "Esperando a que PostgreSQL esté listo en $DB_HOST:$DB_PORT..."
+retry_count=0
+until pg_isready -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" > /dev/null 2>&1; do
+  retry_count=$((retry_count + 1))
+  if [ "$retry_count" -ge "$MAX_RETRIES" ]; then
+    echo "PostgreSQL no respondió después de $MAX_RETRIES intentos. Abortando."
+    exit 1
+  fi
+  echo "Intento $retry_count/$MAX_RETRIES: PostgreSQL aún no está listo. Esperando $RETRY_INTERVAL segundos..."
+  sleep "$RETRY_INTERVAL"
+done
+
+echo "PostgreSQL está listo. Continuando con la inicialización..."
 
 # Step 2: Comando SQL para crear la tabla si no existe
 CREATE_TABLE_QUERY="CREATE TABLE IF NOT EXISTS public.users (
