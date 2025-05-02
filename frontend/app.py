@@ -1,3 +1,4 @@
+import json
 import pandas as pd
 import streamlit as st
 import streamlit_antd_components as sac
@@ -13,12 +14,14 @@ import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-ENVIRONMENT = "DOCKER"
+ENVIRONMENT = "local"
 WEB_TITLE = "🕵️ TESTING SAMPLE APP"
 
 CATALOG_API_BASE_URL = "catalog-management" if ENVIRONMENT == "DOCKER" else "localhost"
 USER_MANAGEMENT_API_BASE_URL = "user-management" if ENVIRONMENT == "DOCKER" else "localhost"
 LANGUAGE_MANAGEMENT_API_BASE_URL = "language-management" if ENVIRONMENT == "DOCKER" else "localhost"
+
+st.session_state.deleted_catalog = ""
 
 st.set_page_config(page_title=WEB_TITLE, layout="wide")
 st.markdown("""
@@ -72,6 +75,52 @@ st.markdown("""
     </div>
 """, unsafe_allow_html=True)
 
+@st.dialog("New Catalog")
+def create_catalog(headers):
+    st.write(f"New Catalog")
+    name = st.text_input("Name", placeholder="Name")
+    description = st.text_input("Description", placeholder="Description")
+    if st.button("Create"):
+        body = {
+            "name": name,
+            "description": description
+        }
+        requests.post(f"http://{CATALOG_API_BASE_URL}:8002/catalog/", headers=headers, json=body).json()
+        st.rerun()
+
+@st.dialog("Delete Catalog?")
+def delete_catalog(catalog_id, catalog_name, catalog_description, headers):
+    st.write("Confirm that you want to delete this catalog.")
+    st.text_input("Name", value=catalog_name, disabled=True)
+    st.text_input("Description", value=catalog_description, disabled=True)
+    st.caption(f"ID: {catalog_id}")
+    if st.button("Delete"):
+        requests.delete(f"http://{CATALOG_API_BASE_URL}:8002/catalog/?catalog_id={catalog_id}", headers=headers).json()
+        st.session_state.deleted_catalog = {"catalog_id": catalog_id}
+        st.rerun()
+
+@st.dialog("Edit Catalog")
+def edit_catalog(catalog_id, catalog_name, catalog_description, headers):
+    name = st.text_input("Name", value=catalog_name)
+    description = st.text_input("Description", value=catalog_description)
+    st.caption(f"ID: {catalog_id}")
+    if st.button("Save changes"):
+        body = {
+            "_id": catalog_id,
+            "name": name,
+            "description": description
+        }
+        requests.put(f"http://{CATALOG_API_BASE_URL}:8002/catalog/", headers=headers, json=body).json()
+        st.rerun()
+
+@st.dialog("Catalog Details")
+def details_catalog(catalog_id, catalog_name, catalog_description):
+    st.text_input("Name", value=catalog_name, disabled=True)
+    st.text_input("Description", value=catalog_description, disabled=True)
+    st.caption(f"ID: {catalog_id}")
+    if st.button("Close"):
+        st.rerun()
+
 def show_web():
     menu_items = [sac.MenuItem(get_translation('menu.homepage'))]
     if verify_permission(Permissions.ACCESS_CATALOG_MANAGEMENT, st.session_state["access_token"]):
@@ -106,45 +155,65 @@ def show_web():
         """, unsafe_allow_html=True)
         
     if menu_id == get_translation('menu.catalog'):
-        st.header(f"{WEB_TITLE} - (WIP) {get_translation('menu.catalog')}")
+        st.header(f"{WEB_TITLE} - (WIP) {get_translation('menu.catalog')}")        
+        headers = {
+            "Authorization": "Bearer " + st.session_state["access_token"]
+        }
+        first_search = True        
 
-        filter_col1, filter_col2 = st.columns([1, 1])
+        filter_col1, filter_col2 = st.columns([2, 1])
         with filter_col1:            
-            st.text_input(label=get_translation('catalog.filter.label'), placeholder=get_translation('catalog.filter.placeholder'))
-            st.button(get_translation('catalog.filter.label'), type="primary")
+            search_value = st.text_input(label=get_translation('catalog.filter.label'), placeholder=get_translation('catalog.filter.placeholder'))
+            create_btn = st.button('Create New', type="primary")
 
-        col1, col2, col3 = st.columns(3)
+            
 
-        with col1:
-            card(
-                title="Hello World!",
-                text="Some description",
-                image="https://placecats.com/100/200",
-                url="https://github.com/gamcoh/st-card"
-            )
+            if search_value or first_search:
+                response = (requests.get(f"http://{CATALOG_API_BASE_URL}:8002/catalog/?filter={search_value}", headers=headers).json())
+                cols = st.columns(3)
 
-        with col2:
-            card(
-                title="Hello World!",
-                text="Some description",
-                image="https://placecats.com/200/200",
-                url="https://github.com/gamcoh/st-card"
-            )
+                headers = {
+                    "Authorization": "Bearer " + st.session_state["access_token"]
+                }
 
-        with col3:
-            card(
-                title="Hello World!",
-                text="Some description",
-                image="https://placecats.com/300/200",
-                url="https://github.com/gamcoh/st-card"
-            )
+                for i, item in enumerate(response['catalog']):
+                    with cols[i % 3]:
+                        with st.form(key=f"catalog-{item['_id']}"):
+                            st.markdown(f"### {item['name']}")
+                            st.write(item['description'])
+                            st.caption(f"ID: {item['_id']}")
+
+                            details_button = st.form_submit_button("📜 Details")
+                            if details_button:
+                                details_catalog(item['_id'], item['name'], item['description'])
+
+                            if verify_permission(Permissions.UPDATE_CATALOG, st.session_state["access_token"]):
+                                edit_button = st.form_submit_button("✏️ Edit")
+                                if edit_button:
+                                    edit_catalog(item['_id'], item['name'], item['description'], headers)
+
+                            if verify_permission(Permissions.DELETE_CATALOG, st.session_state["access_token"]):
+                                delete_button = st.form_submit_button("🗑️ Delete")
+                                if delete_button:
+                                    delete_catalog(item['_id'], item['name'], item['description'], headers)
+                                    
+
+            if create_btn:
+                create_catalog(headers)
+
+            if "deleted_catalog" in st.session_state and st.session_state.deleted_catalog:
+                catalog_id = st.session_state.deleted_catalog.get("catalog_id", "")
+                st.toast(f"Catalog '{catalog_id}' deleted.", icon='✅')
+                st.session_state.deleted_catalog = ""
+
+        
 
     if menu_id == get_translation('menu.userManagement'):
         st.header(f"{WEB_TITLE} - {get_translation('menu.userManagement')}")
         refresh_button = st.button(get_translation("userManagement.refreshDataButton"))
 
         if refresh_button:
-            st.experimental_rerun()
+            st.rerun()
 
         tab1, tab2, tab3 = st.tabs([
             get_translation("userManagement.tab.listOfUsers"),
@@ -174,15 +243,19 @@ def show_web():
                     repeat_password = st.text_input(get_translation("userManagement.createUser.form.repeatPassword"), type="password")
 
                     st.markdown(f"### {get_translation('userManagement.createUser.form.permissions')}")
-                    col1, col2 = st.columns(2)
+                    col1, col2, col3 = st.columns(3)
 
                     with col1:
                         access_catalog_permission = st.checkbox(Permissions.ACCESS_CATALOG_MANAGEMENT.name, help=get_translation("userManagement.createUser.form.accessCatalog.info"))
                         access_user_management_permission = st.checkbox(Permissions.ACCESS_USER_MANAGEMENT.name, help=get_translation('userManagement.createUser.form.accessUserManagement.info'))
-                        create_catalog_permission = st.checkbox(Permissions.CREATE_CATALOG.name, help=get_translation('userManagement.createUser.form.createCatalog.info'))
                         set_language_permission = st.checkbox(Permissions.SET_LANGUAGE.name, help=get_translation("userManagement.createUser.form.setLanguage.info"))
 
                     with col2:
+                        edit_catalog_permission = st.checkbox(Permissions.UPDATE_CATALOG.name, help=get_translation('userManagement.createUser.form.editCatalog.info'))
+                        create_catalog_permission = st.checkbox(Permissions.CREATE_CATALOG.name, help=get_translation('userManagement.createUser.form.createCatalog.info'))
+                        delete_catalog_permission = st.checkbox(Permissions.DELETE_CATALOG.name, help=get_translation('userManagement.createUser.form.deleteCatalog.info'))
+
+                    with col3:
                         read_users_permission = st.checkbox(Permissions.READ_USERS.name, help=get_translation("userManagement.createUser.form.readUsers.info"))
                         create_users_permission = st.checkbox(Permissions.CREATE_USERS.name, help=get_translation("userManagement.createUser.form.createUsers.info"))
                         delete_users_permission = st.checkbox(Permissions.DELETE_USERS.name, help=get_translation("userManagement.createUser.form.deleteUsers.info"))
@@ -196,6 +269,8 @@ def show_web():
                             access_catalog_permission,
                             access_user_management_permission,
                             create_catalog_permission,
+                            edit_catalog_permission,
+                            delete_catalog_permission,
                             set_language_permission,
                             read_users_permission,
                             create_users_permission,
@@ -224,6 +299,10 @@ def show_web():
                                 permissions.append(Permissions.ACCESS_USER_MANAGEMENT.name)
                             if create_catalog_permission:
                                 permissions.append(Permissions.CREATE_CATALOG.name)
+                            if edit_catalog_permission:
+                                permissions.append(Permissions.UPDATE_CATALOG)
+                            if delete_catalog_permission:
+                                permissions.append(Permissions.DELETE_CATALOG)
                             if read_users_permission:
                                 permissions.append(Permissions.READ_USERS.name)
                             if create_users_permission:

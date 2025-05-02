@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   postgres:
     image: diegomartinezgilabert/testing-sample-app:db-postgres-1.0

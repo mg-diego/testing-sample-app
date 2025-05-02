@@ -1,6 +1,11 @@
 # Imagen base oficial de Python
 FROM python:3.11-slim
 
+# Copiar código común
+WORKDIR /app/common
+COPY common /app/common
+RUN pip install -r requirements.txt
+
 # Crear directorio y copiar /app
 WORKDIR /app
 COPY backend/catalog-management/app ./app
@@ -11,4 +16,7 @@ RUN pip install -r ./app/requirements.txt
 EXPOSE 8002
 
 # Comando para arrancar la API
-CMD ["uvicorn", "app.api:app", "--host", "0.0.0.0", "--port", "8002"]
+WORKDIR /app
+CMD ["sh", "-c", "uvicorn app.api:app --host 0.0.0.0 --port 8002"]
+
+

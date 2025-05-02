@@ -4,6 +4,7 @@ from typing import List
 
 from common.jwt_utils import create_access_token, verify_permission
 from common.permissions import Permissions
+from common.errors import APIError, APIErrorList
 from .models import User
 from .service import login_service, get_user_list_service, create_user_service, delete_user_service
 
@@ -51,7 +52,7 @@ def get_user_list(authorization: str = Header(...)):
         return response        
     else:
         logger.warning(f"[GET /users/] - Permission denied for retrieving user list. Token: {token}")
-        raise HTTPException(status_code=401, detail="Missing permission.")
+        raise HTTPException(status_code=401, detail=APIErrorList.UNAUTHORIZED_ERROR.model_dump())
     
 
 @app.post("/users/", response_model=User)
@@ -68,7 +69,7 @@ def create_user(body: User, authorization: str = Header(...)):
         return response
     else:
         logger.warning(f"[POST /users/] - Permission denied for creating user. Token: {token}")
-        raise HTTPException(status_code=401, detail="Missing permission.")
+        raise HTTPException(status_code=401, detail=APIErrorList.UNAUTHORIZED_ERROR.model_dump())
     
 
 @app.delete("/users/", response_model=dict)
@@ -87,7 +88,7 @@ def delete_user(username: str = Query(...), authorization: str = Header(...)):
             return {"message": f"User '{username}' deleted successfully."}
         else:
             logger.warning(f"[DELETE /users/] - Failed to delete user: {username}")
-            raise HTTPException(status_code=404, detail="User not found or deletion failed.")
+            raise HTTPException(status_code=404, detail=APIErrorList.NOT_FOUND_ERROR.model_dump())
     else:
         logger.warning(f"[DELETE /users/] - Permission denied. Token: {token}")
-        raise HTTPException(status_code=401, detail="Missing permission.")
+        raise HTTPException(status_code=401, detail=APIErrorList.UNAUTHORIZED_ERROR.model_dump())

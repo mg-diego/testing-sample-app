@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   postgres:
     image: db-postgres
@@ -18,7 +16,7 @@ services:
       - app_network
 
   mongo:
-    image: mongo
+    image: db-mongo
     ports:
       - "27017:27017"
     networks:

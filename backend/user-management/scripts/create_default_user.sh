@@ -39,7 +39,7 @@ SQL_QUERY="SELECT 1 FROM public.users WHERE username='admin';"
 
 # Step 4: Comando SQL para insertar el usuario admin si no existe
 INSERT_QUERY="INSERT INTO public.users (username, password, permissions) 
-              VALUES ('admin', 'admin', ARRAY['ACCESS_USER_MANAGEMENT', 'ACCESS_CATALOG_MANAGEMENT', 'READ_USERS', 'CREATE_USERS', 'DELETE_USERS', 'CREATE_CATALOG', 'SET_LANGUAGE']);"
+              VALUES ('admin', 'admin', ARRAY['ACCESS_USER_MANAGEMENT', 'ACCESS_CATALOG_MANAGEMENT', 'READ_USERS', 'CREATE_USERS', 'DELETE_USERS', 'CREATE_CATALOG', 'DELETE_CATALOG', 'UPDATE_CATALOG', 'SET_LANGUAGE']);"
 
 # Step 5: Crear la tabla si no existe
 echo "Creando tabla users si no existe..."

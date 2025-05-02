@@ -1,5 +1,5 @@
 # Requisitos para Streamlit UI
-streamlit==1.33.0
+streamlit==1.44.1
 requests==2.31.0
 streamlit-antd-components
 streamlit_card

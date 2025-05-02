@@ -34,6 +34,8 @@
     "userManagement.createUser.form.accessCatalog.info": "Allows to navigate to the 'Catalog' menu",
     "userManagement.createUser.form.accessUserManagement.info": "Allows to navigate to the 'User Management' menu",
     "userManagement.createUser.form.createCatalog.info": "Allows to create a new catalog.",
+    "userManagement.createUser.form.editCatalog.info": "Allows to edit a catalog.",
+    "userManagement.createUser.form.deleteCatalog.info": "Allows to delete a catalog.",
     "userManagement.createUser.form.setLanguage.info": "Allows set the web language.",
     "userManagement.createUser.form.readUsers.info": "Allows to read the list of users.",
     "userManagement.createUser.form.createUsers.info": "Allows to create a new user.",
