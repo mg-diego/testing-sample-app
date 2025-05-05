@@ -1,5 +1,6 @@
 from .database import CatalogManagementDatabase
 from .models import CatalogItem
+from common.errors import ErrorCode
 from http import HTTPStatus
 import logging
 
@@ -11,11 +12,11 @@ logger = logging.getLogger(__name__)
 def create_catalog_service(catalog: CatalogItem):
     if not catalog.name.strip():
         logger.info(f"[POST /catalog/] [400] - Name can't be empty: {catalog}")
-        return {"status": HTTPStatus.BAD_REQUEST, "detail": "Name can't be empty."}
+        return {"status": HTTPStatus.BAD_REQUEST, "detail": ErrorCode.EMPTY_NAME.value}
     
     if not catalog.description.strip():
         logger.info(f"[POST /catalog/] [400] - Description can't be empty: {catalog}")
-        return {"status": HTTPStatus.BAD_REQUEST, "detail": "Description can't be empty."}
+        return {"status": HTTPStatus.BAD_REQUEST, "detail": ErrorCode.EMPTY_DESCRIPTION.value}
 
     db_status = catalog_management_database.create_item(catalog)
     logger.debug(f"DB Status: {db_status}")
@@ -27,7 +28,7 @@ def create_catalog_service(catalog: CatalogItem):
         logger.info(f"[POST /catalog/] [500] - Internal Server Error: {db_status.get('error', 'Unknown error')}")
         return {
             "status": HTTPStatus.INTERNAL_SERVER_ERROR,
-            "detail": db_status.get("error", "Unknown error")
+            "detail": db_status.get("error", ErrorCode.UNKNOWN_ERROR.value)
         }    
 
 def get_catalog_list_service(filter: str):
@@ -40,14 +41,14 @@ def get_catalog_list_service(filter: str):
     else:
         return {
             "status": HTTPStatus.INTERNAL_SERVER_ERROR,
-            "detail": db_status.get("error", "Unknown error")
+            "detail": db_status.get("error", ErrorCode.UNKNOWN_ERROR.value)
         }
     
 
 def delete_catalog_service(catalog_id: str):
     if catalog_id == "":
         logger.info(f"[DELETE /catalog/] [400] - ID can't be empty: {catalog_id}")
-        return {"status": HTTPStatus.BAD_REQUEST, "detail": "ID can't be empty."}
+        return {"status": HTTPStatus.BAD_REQUEST, "detail": ErrorCode.EMPTY_ID.value}
     
     db_status = catalog_management_database.delete_item(catalog_id)
     logger.debug(f"DB Status: {db_status}")
@@ -57,20 +58,20 @@ def delete_catalog_service(catalog_id: str):
         return {"status": HTTPStatus.OK, "detail": ""}
     else:
         if db_status.get("error") == 'No document matched the provided ID.':
-            return {"status": HTTPStatus.NOT_FOUND, "detail": "Catalog not found."}
+            return {"status": HTTPStatus.NOT_FOUND, "detail": ErrorCode.NOT_FOUND.value}
         else:
             return {
                 "status": HTTPStatus.INTERNAL_SERVER_ERROR,
-                "detail": db_status.get("error", "Unknown error")
+                "detail": db_status.get("error", ErrorCode.UNKNOWN_ERROR.value)
             }
 
 def update_catalog_service(catalog: CatalogItem):
     if not catalog.id.strip():
-        return {"status": HTTPStatus.BAD_REQUEST, "detail": "ID can't be empty."}
+        return {"status": HTTPStatus.BAD_REQUEST, "detail": ErrorCode.EMPTY_ID.value}
     if not catalog.name.strip():
-        return {"status": HTTPStatus.BAD_REQUEST, "detail": "Name can't be empty."}    
+        return {"status": HTTPStatus.BAD_REQUEST, "detail": ErrorCode.EMPTY_NAME.value}    
     if not catalog.description.strip():
-        return {"status": HTTPStatus.BAD_REQUEST, "detail": "Description can't be empty."}
+        return {"status": HTTPStatus.BAD_REQUEST, "detail": ErrorCode.EMPTY_DESCRIPTION.value}
     
     db_status = catalog_management_database.update_item(catalog)
     logger.debug(f"DB Status: {db_status}")
@@ -80,10 +81,10 @@ def update_catalog_service(catalog: CatalogItem):
         return {"status": HTTPStatus.OK, "detail": ""}
     else:
         if db_status.get("error") == 'No document matched the provided ID.':
-            return {"status": HTTPStatus.NOT_FOUND, "detail": "Catalog not found."}
+            return {"status": HTTPStatus.NOT_FOUND, "detail": ErrorCode.NOT_FOUND.value}
         else:
             return {
                 "status": HTTPStatus.INTERNAL_SERVER_ERROR,
-                "detail": db_status.get("error", "Unknown error")
+                "detail": db_status.get("error", ErrorCode.UNKNOWN_ERROR.value)
             }
     

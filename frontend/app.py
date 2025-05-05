@@ -1,7 +1,7 @@
 import pandas as pd
 import streamlit as st
 import streamlit_antd_components as sac
-from common.jwt_utils import verify_permission, verify_token
+from common.jwt_utils import verify_permission
 from common.permissions import Permissions
 from translations_service import get_translation, update_translations
 
@@ -28,7 +28,7 @@ def show_toast(response: requests.Response, custom_message):
         st.session_state.toast['text'] = f"{custom_message}"
         st.session_state.toast['icon'] = "✅"
     else:
-        st.session_state.toast['text'] = f"{response_json['detail']}"
+        st.session_state.toast['text'] = get_translation(f"errors.{response_json['detail']}")
         st.session_state.toast['icon'] = "🚨"
 
 st.set_page_config(page_title=WEB_TITLE, layout="wide")
@@ -94,7 +94,7 @@ def create_catalog():
             "description": description
         }
         response = requests.post(f"http://{CATALOG_API_BASE_URL}:8002/catalog/", headers=get_headers(), json=body)
-        show_toast(response, f"Catalog '{name}' created.")            
+        show_toast(response, get_translation('catalog.toast.create') % name)
         st.rerun()
 
 @st.dialog("Delete Catalog?")
@@ -105,7 +105,7 @@ def delete_catalog(catalog_id, catalog_name, catalog_description):
     st.caption(f"ID: {catalog_id}")
     if st.button("Delete"):
         response = requests.delete(f"http://{CATALOG_API_BASE_URL}:8002/catalog/?catalog_id={catalog_id}", headers=get_headers())
-        show_toast(response, f"Catalog '{catalog_id}' deleted.")
+        show_toast(response, get_translation('catalog.toast.delete') % catalog_id)
         st.rerun()
 
 @st.dialog("Edit Catalog")
@@ -120,7 +120,7 @@ def edit_catalog(catalog_id, catalog_name, catalog_description):
             "description": description
         }
         response = requests.put(f"http://{CATALOG_API_BASE_URL}:8002/catalog/", headers=get_headers(), json=body)
-        show_toast(response, f"Catalog '{catalog_id}' updated.")
+        show_toast(response, get_translation('catalog.toast.edit') % catalog_id)
         st.rerun()
 
 @st.dialog("Catalog Details")
@@ -139,7 +139,9 @@ def show_web():
     if verify_permission(Permissions.ACCESS_USER_MANAGEMENT, st.session_state["access_token"]):
         menu_items.append(sac.MenuItem(get_translation('menu.userManagement')))
 
-    menu_items.append(sac.MenuItem(get_translation('menu.language')))
+    if verify_permission(Permissions.SET_LANGUAGE, st.session_state["access_token"]):
+        menu_items.append(sac.MenuItem(get_translation('menu.language')))
+
     menu_items.append(sac.MenuItem(get_translation('menu.logout')))
 
     with st.sidebar:
@@ -307,7 +309,7 @@ def show_web():
                                 "permissions": permissions
                             }
                             create_response = requests.post(f"http://{USER_MANAGEMENT_API_BASE_URL}:8001/users", headers=get_headers(), json=body)
-                            show_toast(create_response, f"User '{username}' created successfully!")
+                            show_toast(create_response, get_translation('userManagement.createUser.toast.success') % username)
                             st.rerun()
 
             else:
@@ -321,7 +323,7 @@ def show_web():
 
                 if st.button(get_translation('userManagement.deleteUser.deleteButton'), type="primary"):
                     delete_response = requests.delete(f"http://{USER_MANAGEMENT_API_BASE_URL}:8001/users", headers=get_headers(), params={"username": selected_user})
-                    show_toast(delete_response, f"User '{selected_user}' deleted successfully!")
+                    show_toast(delete_response, get_translation('userManagement.deleteUser.toast.success') % selected_user)
                     st.rerun()
                         
             else:
@@ -339,7 +341,7 @@ def show_web():
             def get_language_code(language_name, languages):
                 for language in languages:
                     if language[0] == language_name:
-                        return language[1]
+                        return str(language[1])
                     
             def get_language_index_by_code(code: str, languages: list) -> int:
                 for index, (_, lang_code) in enumerate(languages):
@@ -357,8 +359,8 @@ def show_web():
                             
             selected_language = st.radio(
                 "",
-                options=[lang[0] for lang in languages],  # Flags as options
-                index=get_language_index_by_code(active_language, languages)  # Default selected item (if you want to pre-select one)
+                options=[lang[0] for lang in languages],
+                index=get_language_index_by_code(active_language, languages)
             )
 
             # Submit button
@@ -368,11 +370,9 @@ def show_web():
                 response = requests.post(f"http://{LANGUAGE_MANAGEMENT_API_BASE_URL}:8003/language/?language={get_language_code(selected_language, languages)}", headers=get_headers())
                 if response.ok:
                     update_translations(requests.get(f"http://{LANGUAGE_MANAGEMENT_API_BASE_URL}:8003/language/translations").json())
-                    show_toast(response, f"Language updated to '{get_language_code(selected_language, languages)}'")
-                    st.rerun()
-                else:
-                    show_toast(response, f"Language updated to '{get_language_code(selected_language, languages)}'")
-                            
+
+                show_toast(response, get_translation("language.toast.success") % get_language_code(selected_language, languages).upper())
+                st.rerun()
 
     if menu_id == get_translation('menu.logout'):
         st.session_state.clear()
@@ -400,7 +400,7 @@ def login():
                         st.session_state["access_token"] = response_content_detail["access_token"]
                         st.rerun()                                        
                     else:
-                        st.error(response_content_detail, icon="⚠️")
+                        st.error(get_translation(f"errors.{response_content_detail}"), icon="⚠️")
 
             except Exception as e:
                 st.error(e, icon="⚠️")

@@ -6,4 +6,7 @@ def update_translations(new_translations):
 
 def get_translation(key):
     global TRANSLATIONS
-    return TRANSLATIONS[key]
+    try:
+        return TRANSLATIONS[key]
+    except:
+        return key

@@ -4,6 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from common.jwt_utils import verify_permission
 from common.permissions import Permissions
 from common.api_utils import handle_response
+from common.errors import ErrorCode
 from .service import get_translations_service, set_active_language_service, get_active_language_service
 
 import logging
@@ -31,17 +32,17 @@ def get_language_translations():
 def get_language(authorization: str = Header(...)):
     token = authorization.split(" ")[1]    
     if verify_permission(Permissions.SET_LANGUAGE, token):
-        handle_response(get_active_language_service())
+        return handle_response(get_active_language_service())
     else:
         logger.warning(f"[GET /language/] - Permission denied. Token: {token}")
-        raise HTTPException(status_code=401, detail="Missing permission.")
+        raise HTTPException(status_code=401, detail=ErrorCode.UNAUTHORIZED.value)
     
 
 @app.post("/language/")
 def set_language(language: str, authorization: str = Header(...)):
     token = authorization.split(" ")[1]    
     if verify_permission(Permissions.SET_LANGUAGE, token):
-        handle_response(set_active_language_service(language))
+        return handle_response(set_active_language_service(language))
     else:
         logger.warning(f"[POST /language/] - Permission denied. Token: {token}")
-        raise HTTPException(status_code=401, detail="Missing permission.")
+        raise HTTPException(status_code=401, detail=ErrorCode.UNAUTHORIZED.value)

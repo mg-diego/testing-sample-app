@@ -1,24 +1,20 @@
-# Enum for error codes
 from enum import Enum
-from pydantic import BaseModel
-
 
 class ErrorCode(Enum):
-    INVALID_INPUT = "INVALID_INPUT"
+    EMPTY_NAME = "EMPTY_NAME"
+    EMPTY_DESCRIPTION = "EMPTY_DESCRIPTION"
+    EMPTY_ID = "EMPTY_ID"
+    EMPTY_USERNAME = "EMPTY_USERNAME"
+    EMPTY_PASSWORD = "EMPTY_PASSWORD"
+
     NOT_FOUND = "NOT_FOUND"
+    NO_LANGUAGE = "NO_LANGUAGE"
+    NO_PERMISSION_ASSIGNED = "NO_PERMISSION_ASSIGNED"
+
     UNAUTHORIZED = "UNAUTHORIZED"
     INTERNAL_ERROR = "INTERNAL_ERROR"
+    MISSING_PERMISSION = "MISSING_PERMISSION"
 
-
-# Custom error class
-class APIError(BaseModel):
-    code: ErrorCode
-    message: str
-    details: str = None
-
-
-class ErrorList:
-    INVALID_INPUT_ERROR = APIError(code=ErrorCode.INVALID_INPUT, message="The input provided is invalid")
-    NOT_FOUND_ERROR = APIError(code=ErrorCode.NOT_FOUND, message="The resource could not be found")
-    UNAUTHORIZED_ERROR = APIError(code=ErrorCode.UNAUTHORIZED, message="Unauthorized access")
-    INTERNAL_ERROR = APIError(code=ErrorCode.INTERNAL_ERROR, message="An internal server error occurred")
+    UNKNOWN_ERROR = "UNKNOWN_ERROR"
+    USER_NOT_FOUND = "USER_NOT_FOUND"
+    USER_WRONG_PASSWORD = "USER_WRONG_PASSWORD"

@@ -4,6 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from common.jwt_utils import verify_permission
 from common.permissions import Permissions
 from common.api_utils import handle_response
+from common.errors import ErrorCode
 from .service import create_catalog_service, get_catalog_list_service, delete_catalog_service, update_catalog_service
 from .models import CatalogItem
 
@@ -29,7 +30,7 @@ def create_catalog_item(item: CatalogItem, authorization: str = Header(...)):
         return handle_response(create_catalog_service(item))
     else:
         logger.warning(f"[POST /catalog/] - Permission denied to create a catalog. Token: {token}")
-        raise HTTPException(status_code=401, detail="Missing permission.")
+        raise HTTPException(status_code=401, detail=ErrorCode.UNAUTHORIZED.value)
     
 @app.delete("/catalog/")
 def delete_catalog_item(catalog_id: str, authorization: str = Header(...)):
@@ -38,7 +39,7 @@ def delete_catalog_item(catalog_id: str, authorization: str = Header(...)):
         return handle_response(delete_catalog_service(catalog_id))
     else:
         logger.warning(f"[DELETE /catalog/] - Permission denied to delete catalog. Token: {token}")
-        raise HTTPException(status_code=401, detail="Missing permission.")
+        raise HTTPException(status_code=401, detail=ErrorCode.UNAUTHORIZED.value)
     
 @app.put("/catalog/")
 def update_catalog_item(item: CatalogItem, authorization: str = Header(...)):
@@ -47,7 +48,7 @@ def update_catalog_item(item: CatalogItem, authorization: str = Header(...)):
         return handle_response(update_catalog_service(item))
     else:
         logger.warning(f"[PUT /catalog/] - Permission denied to update catalog. Token: {token}")
-        raise HTTPException(status_code=401, detail="Missing permission.")
+        raise HTTPException(status_code=401, detail=ErrorCode.UNAUTHORIZED.value)
 
 @app.get("/catalog/")
 def get_catalog_list(filter: str, authorization: str = Header(...)):
@@ -56,4 +57,4 @@ def get_catalog_list(filter: str, authorization: str = Header(...)):
         return handle_response(get_catalog_list_service(filter))
     else:
         logger.warning(f"[GET /catalog/] - Permission denied to retrieve catalog list. Token: {token}")
-        raise HTTPException(status_code=401, detail="Missing permission.")
+        raise HTTPException(status_code=401, detail=ErrorCode.UNAUTHORIZED.value)
