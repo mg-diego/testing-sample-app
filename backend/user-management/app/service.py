@@ -1,35 +1,99 @@
+from http import HTTPStatus
+
+from common.jwt_utils import create_access_token
 from .database import UserManagementDatabase
 from .models import User
+import logging
+
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 user_management_database = UserManagementDatabase()
 
 def login_service(username, password):    
-    user = user_management_database.get_user(username)
+    db_status = user_management_database.get_user(username)
+    logger.debug(f"DB Status: {db_status}")
 
-    if user == None:
-        return "User not found"
-    
-    if user['password'] != password:
-        return "Incorrect password"
-       
-    return user
+    if db_status.get('success'):
+        if db_status.get("detail")['password'] == password: 
+            user_data = {"username": db_status.get("detail")["username"], "permissions": db_status.get("detail")["permissions"]}
+            access_token = create_access_token(data=user_data)
+            logger.info(f"[POST /login/] [200] - User login: {username} - {access_token}")
+
+            return { "status": HTTPStatus.OK, "detail": { "access_token": access_token, "token_type": "bearer" } }
+        else:
+            logger.info(f"[POST /login/] [400] - User login (wrong password): {username}")
+            return {"status": HTTPStatus.BAD_REQUEST, "detail": "Wrong password."}
+    else:
+        if db_status.get('error') == "User not found.":
+            logger.info(f"[POST /login/] [404] - User not found: {username}")
+            return {"status": HTTPStatus.NOT_FOUND, "detail": "User not found."}
+        else:
+            logger.info(f"[POST /login/] [500] - Internal Server Error: {db_status.get('error', 'Unknown error')}")
+            return {
+                "status": HTTPStatus.INTERNAL_SERVER_ERROR,
+                "detail": db_status.get("error", "Unknown error")
+            }   
 
 def get_user_list_service():
-    return user_management_database.get_user_list()
+    db_status = user_management_database.get_user_list()
+    logger.debug(f"DB Status: {db_status}")
+
+    if db_status.get('success'):
+        logger.info(f"[GET /users/] [200] - User list retrieved.")
+        return {"status": HTTPStatus.OK, "detail": db_status.get("detail")}
+    else:
+        logger.info(f"[GET /users/] [500] - Internal Server Error: {db_status.get('error', 'Unknown error')}")
+        return {
+            "status": HTTPStatus.INTERNAL_SERVER_ERROR,
+            "detail": db_status.get("error", "Unknown error")
+        }
 
 def create_user_service(user: User):
-    if user.username == "":
-        return "Username can't be empty."
-    if user.password == "":
-        return "Password can't be empty."
-    if len(user.permissions) == 0:
-        return "At least 1 permission should be assigned."
+    if not user.username.strip():
+        logger.info(f"[POST /users/] [400] - Username can't be empty: {user}")
+        return {"status": HTTPStatus.BAD_REQUEST, "detail": "Username can't be empty."}
     
-    return user_management_database.create_user(user.username, user.password, user.permissions)
+    if not user.password.strip():
+        logger.info(f"[POST /users/] [400] - Password can't be empty: {user}")
+        return {"status": HTTPStatus.BAD_REQUEST, "detail": "Password can't be empty."}
+
+    if len(user.permissions) == 0:
+        logger.info(f"[POST /users/] [400] - At least 1 permission should be assigned: {user}")
+        return {"status": HTTPStatus.BAD_REQUEST, "detail": "At least 1 permission should be assigned."}
+    
+    db_status = user_management_database.create_user(user.username, user.password, user.permissions)
+    logger.debug(f"DB Status: {db_status}")
+
+    if db_status.get('success'):
+        logger.info(f"[POST /users/] [200] - User created: {user}")
+        return {"status": HTTPStatus.OK, "detail": ""}
+    else:
+        logger.info(f"[POST /users/] [500] - Internal Server Error: {db_status.get('error', 'Unknown error')}")
+        return {
+            "status": HTTPStatus.INTERNAL_SERVER_ERROR,
+            "detail": db_status.get("error", "Unknown error")
+        }
 
 def delete_user_service(username: str):
     if username == "":
-        return "Username can't be empty."
-    
-    return user_management_database.delete_user(username)
+        logger.info(f"[DELETE /users/] [400] - Username can't be empty: {username}")
+        return {"status": HTTPStatus.BAD_REQUEST, "detail": "Username can't be empty."}    
+  
+    db_status = user_management_database.delete_user(username)
+    logger.debug(f"DB Status: {db_status}")
+
+    if db_status.get('success'):
+        logger.info(f"[DELETE /user/] [200] - User deleted: {username}")
+        return {"status": HTTPStatus.OK, "detail": ""}
+    else:
+        if db_status.get('error') == "User not found.":
+            logger.info(f"[DELETE /users/] [404] - User not found: {username}")
+            return {"status": HTTPStatus.NOT_FOUND, "detail": "User not found."}
+        else:
+            logger.info(f"[DELETE /users/] [500] - Internal Server Error: {db_status.get('error', 'Unknown error')}")
+            return {
+                "status": HTTPStatus.INTERNAL_SERVER_ERROR,
+                "detail": db_status.get("error", "Unknown error")
+            }
     

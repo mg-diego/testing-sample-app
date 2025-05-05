@@ -17,8 +17,7 @@ class APIError(BaseModel):
     details: str = None
 
 
-# Example error list, as a dictionary or list
-class APIErrorList:
+class ErrorList:
     INVALID_INPUT_ERROR = APIError(code=ErrorCode.INVALID_INPUT, message="The input provided is invalid")
     NOT_FOUND_ERROR = APIError(code=ErrorCode.NOT_FOUND, message="The resource could not be found")
     UNAUTHORIZED_ERROR = APIError(code=ErrorCode.UNAUTHORIZED, message="Unauthorized access")

@@ -1,22 +1,89 @@
 from .database import CatalogManagementDatabase
 from .models import CatalogItem
+from http import HTTPStatus
+import logging
 
 catalog_management_database = CatalogManagementDatabase()
 
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 def create_catalog_service(catalog: CatalogItem):
-    if catalog.name == "":
-        return "Name can't be empty."
-    if catalog.description == "":
-        return "Description can't be empty."
+    if not catalog.name.strip():
+        logger.info(f"[POST /catalog/] [400] - Name can't be empty: {catalog}")
+        return {"status": HTTPStatus.BAD_REQUEST, "detail": "Name can't be empty."}
     
-    return catalog_management_database.create_item(catalog)
+    if not catalog.description.strip():
+        logger.info(f"[POST /catalog/] [400] - Description can't be empty: {catalog}")
+        return {"status": HTTPStatus.BAD_REQUEST, "detail": "Description can't be empty."}
+
+    db_status = catalog_management_database.create_item(catalog)
+    logger.debug(f"DB Status: {db_status}")
+
+    if db_status.get("success"):
+        logger.info(f"[POST /catalog/] [200] - Catalog created: {catalog}")
+        return {"status": HTTPStatus.OK, "detail": ""}
+    else:
+        logger.info(f"[POST /catalog/] [500] - Internal Server Error: {db_status.get('error', 'Unknown error')}")
+        return {
+            "status": HTTPStatus.INTERNAL_SERVER_ERROR,
+            "detail": db_status.get("error", "Unknown error")
+        }    
 
 def get_catalog_list_service(filter: str):
-    return catalog_management_database.get_items(filter)
+    db_status = catalog_management_database.get_items(filter)
+    logger.debug(f"DB Status: {db_status}")
+
+    if db_status.get("success"):
+        logger.info(f"[GET /catalog/] - Catalog list retrieved: {db_status.get('detail')}")
+        return {"status": HTTPStatus.OK, "detail": db_status.get("detail")}
+    else:
+        return {
+            "status": HTTPStatus.INTERNAL_SERVER_ERROR,
+            "detail": db_status.get("error", "Unknown error")
+        }
+    
 
 def delete_catalog_service(catalog_id: str):
-    return catalog_management_database.delete_item(catalog_id)
+    if catalog_id == "":
+        logger.info(f"[DELETE /catalog/] [400] - ID can't be empty: {catalog_id}")
+        return {"status": HTTPStatus.BAD_REQUEST, "detail": "ID can't be empty."}
+    
+    db_status = catalog_management_database.delete_item(catalog_id)
+    logger.debug(f"DB Status: {db_status}")
+
+    if db_status.get("success"):
+        logger.info(f"[DELETE /catalog/] - Catalog deleted: {catalog_id}")
+        return {"status": HTTPStatus.OK, "detail": ""}
+    else:
+        if db_status.get("error") == 'No document matched the provided ID.':
+            return {"status": HTTPStatus.NOT_FOUND, "detail": "Catalog not found."}
+        else:
+            return {
+                "status": HTTPStatus.INTERNAL_SERVER_ERROR,
+                "detail": db_status.get("error", "Unknown error")
+            }
 
 def update_catalog_service(catalog: CatalogItem):
-    return catalog_management_database.update_item(catalog)
+    if not catalog.id.strip():
+        return {"status": HTTPStatus.BAD_REQUEST, "detail": "ID can't be empty."}
+    if not catalog.name.strip():
+        return {"status": HTTPStatus.BAD_REQUEST, "detail": "Name can't be empty."}    
+    if not catalog.description.strip():
+        return {"status": HTTPStatus.BAD_REQUEST, "detail": "Description can't be empty."}
+    
+    db_status = catalog_management_database.update_item(catalog)
+    logger.debug(f"DB Status: {db_status}")
+
+    if db_status.get("success"):
+        logger.info(f"[PUT /catalog/] - Catalog updated: {catalog}")
+        return {"status": HTTPStatus.OK, "detail": ""}
+    else:
+        if db_status.get("error") == 'No document matched the provided ID.':
+            return {"status": HTTPStatus.NOT_FOUND, "detail": "Catalog not found."}
+        else:
+            return {
+                "status": HTTPStatus.INTERNAL_SERVER_ERROR,
+                "detail": db_status.get("error", "Unknown error")
+            }
     

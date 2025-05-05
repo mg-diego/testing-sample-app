@@ -1,10 +1,9 @@
 import psycopg2
 from psycopg2 import sql
-from typing import List, Optional, Dict
+from typing import Optional, Dict
 
 class LanguageManagementDatabase:
     def __init__(self):
-        # Configuración de la base de datos
         self.db_host = "postgres"
         self.db_port = "5432"
         self.db_name = "testing-sample-app"
@@ -12,7 +11,6 @@ class LanguageManagementDatabase:
         self.db_password = "password"
 
     def get_connection(self):
-        """Obtiene una conexión a la base de datos PostgreSQL."""
         return psycopg2.connect(
             host=self.db_host,
             port=self.db_port,
@@ -22,7 +20,6 @@ class LanguageManagementDatabase:
         )
 
     def get_active_language(self) -> Optional[Dict]:
-        """Obtiene el idioma activo."""
         query = sql.SQL("SELECT language FROM public.languages WHERE active = TRUE;")
         
         try:
@@ -31,18 +28,17 @@ class LanguageManagementDatabase:
                 cursor.execute(query, )
                 language_data = cursor.fetchone()  # Devuelve la primera fila
                 if language_data:
-                    return language_data[0]
-                return None  # Si no se encuentra el usuario
+                    return {"success": True, "detail": language_data[0] }
+                else:
+                    return {"success": False, "error": "No language is configured." }
+                
         except Exception as e:
-            print(f"Error al obtener el idioma activo: {e}")
+            return {"success": False, "error": e}
         finally:
             if conn:
                 conn.close()
 
     def set_active_language(self, language_code: str) -> bool:
-        """
-        Establece el idioma activo al proporcionado y desactiva los demás.
-        """
         try:
             conn = self.get_connection()
             with conn.cursor() as cursor:
@@ -55,10 +51,9 @@ class LanguageManagementDatabase:
                     (language_code,)
                 )
             conn.commit()
-            return True
+            return {"success": True, "detail": "" }
         except Exception as e:
-            print(f"Error al establecer el idioma activo: {e}")
-            return False
+            return {"success": False, "error": e}
         finally:
             if conn:
                 conn.close()

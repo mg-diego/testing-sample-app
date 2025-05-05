@@ -4,7 +4,6 @@ from typing import List, Optional, Dict
 
 class UserManagementDatabase:
     def __init__(self):
-        # Configuración de la base de datos
         self.db_host = "postgres"
         self.db_port = "5432"
         self.db_name = "testing-sample-app"
@@ -12,7 +11,6 @@ class UserManagementDatabase:
         self.db_password = "password"
 
     def get_connection(self):
-        """Obtiene una conexión a la base de datos PostgreSQL."""
         return psycopg2.connect(
             host=self.db_host,
             port=self.db_port,
@@ -22,23 +20,25 @@ class UserManagementDatabase:
         )
 
     def get_user(self, username: str) -> Optional[Dict]:
-        """Obtiene los datos de un usuario por su nombre de usuario."""
         query = sql.SQL("SELECT username, password, permissions FROM public.users WHERE username = %s;")
         
         try:
             conn = self.get_connection()
             with conn.cursor() as cursor:
                 cursor.execute(query, (username,))
-                user_data = cursor.fetchone()  # Devuelve la primera fila
+                user_data = cursor.fetchone()
                 if user_data:
                     return {
-                        "username": user_data[0],
-                        "password": user_data[1],
-                        "permissions": user_data[2]
+                        "success": True,
+                        "detail": {
+                            "username": user_data[0],
+                            "password": user_data[1],
+                            "permissions": user_data[2]
+                        }
                     }
-                return None  # Si no se encuentra el usuario
+                return {"success": False, "error": "User not found."}
         except Exception as e:
-            print(f"Error al obtener el usuario: {e}")
+            return {"success": False, "error": e}
         finally:
             if conn:
                 conn.close()
@@ -58,16 +58,15 @@ class UserManagementDatabase:
                         "password": row[1],
                         "permissions": row[2]
                     })
-            return users if users else None
+            return {"success": True, "detail": users}
         except Exception as e:
-            print(f"Error al obtener la lista de usuarios: {e}")
-            return None
+            return {"success": False, "error": e}
         finally:
             if conn:
                 conn.close()
+    
 
     def create_user(self, username: str, password: str, permissions: str):
-        """Crea un nuevo usuario en la base de datos."""
         query = sql.SQL("""
             INSERT INTO public.users (username, password, permissions)
             VALUES (%s, %s, %s);
@@ -77,21 +76,22 @@ class UserManagementDatabase:
             conn = self.get_connection()
             with conn.cursor() as cursor:
                 cursor.execute(query, (username, password, permissions))
-                conn.commit()  # Realiza la transacción
+                conn.commit()
                 return {
+                    "success": True,
+                    "detail": {
                         "username": username,
                         "password": password,
                         "permissions": permissions
                     }
+                }
         except Exception as e:
-            print(f"Error al crear el usuario: {e}")
-            return False
+            return {"success": False, "error": e}
         finally:
             if conn:
                 conn.close()
 
-    def delete_user(self, username: str) -> bool:
-        """Borra un usuario en la base de datos."""
+    def delete_user(self, username: str):
         query = sql.SQL("""
             DELETE FROM public.users
             WHERE username = %s;
@@ -103,10 +103,15 @@ class UserManagementDatabase:
             with conn.cursor() as cursor:
                 cursor.execute(query, (username,))
                 conn.commit()
-                return True
+
+                if cursor.rowcount == 0:
+                    return {"success": False, "error": "User not found."}
+
+                return {"success": True, "detail": ""}
+
         except Exception as e:
-            print(f"Error al borrar el usuario: {e}")
-            return False
+            return {"success": False, "error": str(e)}
+
         finally:
             if conn:
                 conn.close()

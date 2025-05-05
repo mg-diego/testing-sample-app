@@ -1,8 +1,6 @@
-import json
 import pandas as pd
 import streamlit as st
 import streamlit_antd_components as sac
-from streamlit_card import card
 from common.jwt_utils import verify_permission, verify_token
 from common.permissions import Permissions
 from translations_service import get_translation, update_translations
@@ -14,14 +12,24 @@ import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-ENVIRONMENT = "local"
+ENVIRONMENT = "DOCKER"
 WEB_TITLE = "🕵️ TESTING SAMPLE APP"
 
 CATALOG_API_BASE_URL = "catalog-management" if ENVIRONMENT == "DOCKER" else "localhost"
 USER_MANAGEMENT_API_BASE_URL = "user-management" if ENVIRONMENT == "DOCKER" else "localhost"
 LANGUAGE_MANAGEMENT_API_BASE_URL = "language-management" if ENVIRONMENT == "DOCKER" else "localhost"
 
-st.session_state.deleted_catalog = ""
+def get_headers():
+    return  { "Authorization": "Bearer " + st.session_state["access_token"] }
+
+def show_toast(response: requests.Response, custom_message):
+    response_json = response.json()
+    if response.ok:
+        st.session_state.toast['text'] = f"{custom_message}"
+        st.session_state.toast['icon'] = "✅"
+    else:
+        st.session_state.toast['text'] = f"{response_json['detail']}"
+        st.session_state.toast['icon'] = "🚨"
 
 st.set_page_config(page_title=WEB_TITLE, layout="wide")
 st.markdown("""
@@ -76,7 +84,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 @st.dialog("New Catalog")
-def create_catalog(headers):
+def create_catalog():
     st.write(f"New Catalog")
     name = st.text_input("Name", placeholder="Name")
     description = st.text_input("Description", placeholder="Description")
@@ -85,22 +93,23 @@ def create_catalog(headers):
             "name": name,
             "description": description
         }
-        requests.post(f"http://{CATALOG_API_BASE_URL}:8002/catalog/", headers=headers, json=body).json()
+        response = requests.post(f"http://{CATALOG_API_BASE_URL}:8002/catalog/", headers=get_headers(), json=body)
+        show_toast(response, f"Catalog '{name}' created.")            
         st.rerun()
 
 @st.dialog("Delete Catalog?")
-def delete_catalog(catalog_id, catalog_name, catalog_description, headers):
+def delete_catalog(catalog_id, catalog_name, catalog_description):
     st.write("Confirm that you want to delete this catalog.")
     st.text_input("Name", value=catalog_name, disabled=True)
     st.text_input("Description", value=catalog_description, disabled=True)
     st.caption(f"ID: {catalog_id}")
     if st.button("Delete"):
-        requests.delete(f"http://{CATALOG_API_BASE_URL}:8002/catalog/?catalog_id={catalog_id}", headers=headers).json()
-        st.session_state.deleted_catalog = {"catalog_id": catalog_id}
+        response = requests.delete(f"http://{CATALOG_API_BASE_URL}:8002/catalog/?catalog_id={catalog_id}", headers=get_headers())
+        show_toast(response, f"Catalog '{catalog_id}' deleted.")
         st.rerun()
 
 @st.dialog("Edit Catalog")
-def edit_catalog(catalog_id, catalog_name, catalog_description, headers):
+def edit_catalog(catalog_id, catalog_name, catalog_description):
     name = st.text_input("Name", value=catalog_name)
     description = st.text_input("Description", value=catalog_description)
     st.caption(f"ID: {catalog_id}")
@@ -110,7 +119,8 @@ def edit_catalog(catalog_id, catalog_name, catalog_description, headers):
             "name": name,
             "description": description
         }
-        requests.put(f"http://{CATALOG_API_BASE_URL}:8002/catalog/", headers=headers, json=body).json()
+        response = requests.put(f"http://{CATALOG_API_BASE_URL}:8002/catalog/", headers=get_headers(), json=body)
+        show_toast(response, f"Catalog '{catalog_id}' updated.")
         st.rerun()
 
 @st.dialog("Catalog Details")
@@ -155,65 +165,42 @@ def show_web():
         """, unsafe_allow_html=True)
         
     if menu_id == get_translation('menu.catalog'):
-        st.header(f"{WEB_TITLE} - (WIP) {get_translation('menu.catalog')}")        
-        headers = {
-            "Authorization": "Bearer " + st.session_state["access_token"]
-        }
-        first_search = True        
+        st.header(f"{WEB_TITLE} - {get_translation('menu.catalog')}")
+        first_search = True
 
-        filter_col1, filter_col2 = st.columns([2, 1])
-        with filter_col1:            
-            search_value = st.text_input(label=get_translation('catalog.filter.label'), placeholder=get_translation('catalog.filter.placeholder'))
-            create_btn = st.button('Create New', type="primary")
+        search_value = st.text_input(label=get_translation('catalog.filter.label'), placeholder=get_translation('catalog.filter.placeholder'))
+        create_btn = st.button('Create New', type="primary")            
 
-            
+        if search_value or first_search:
+            response = (requests.get(f"http://{CATALOG_API_BASE_URL}:8002/catalog/?filter={search_value}", headers=get_headers()).json())
+            cols = st.columns(4)
 
-            if search_value or first_search:
-                response = (requests.get(f"http://{CATALOG_API_BASE_URL}:8002/catalog/?filter={search_value}", headers=headers).json())
-                cols = st.columns(3)
+            for i, item in enumerate(response['detail']):
+                with cols[i % 4]:
+                    with st.form(key=f"catalog-{item['_id']}"):
+                        st.markdown(f"### {item['name']}")
+                        st.write(item['description'])
+                        st.caption(f"ID: {item['_id']}")
 
-                headers = {
-                    "Authorization": "Bearer " + st.session_state["access_token"]
-                }
+                        details_button = st.form_submit_button(f"📜 {get_translation('catalog.button.details')}")
+                        if details_button:
+                            details_catalog(item['_id'], item['name'], item['description'])
 
-                for i, item in enumerate(response['catalog']):
-                    with cols[i % 3]:
-                        with st.form(key=f"catalog-{item['_id']}"):
-                            st.markdown(f"### {item['name']}")
-                            st.write(item['description'])
-                            st.caption(f"ID: {item['_id']}")
+                        if verify_permission(Permissions.UPDATE_CATALOG, st.session_state["access_token"]):
+                            edit_button = st.form_submit_button(f"✏️ {get_translation('catalog.button.edit')}")
+                            if edit_button:
+                                edit_catalog(item['_id'], item['name'], item['description'])
 
-                            details_button = st.form_submit_button("📜 Details")
-                            if details_button:
-                                details_catalog(item['_id'], item['name'], item['description'])
+                        if verify_permission(Permissions.DELETE_CATALOG, st.session_state["access_token"]):
+                            delete_button = st.form_submit_button(f"🗑️ {get_translation('catalog.button.delete')}")
+                            if delete_button:
+                                delete_catalog(item['_id'], item['name'], item['description'])                                    
 
-                            if verify_permission(Permissions.UPDATE_CATALOG, st.session_state["access_token"]):
-                                edit_button = st.form_submit_button("✏️ Edit")
-                                if edit_button:
-                                    edit_catalog(item['_id'], item['name'], item['description'], headers)
-
-                            if verify_permission(Permissions.DELETE_CATALOG, st.session_state["access_token"]):
-                                delete_button = st.form_submit_button("🗑️ Delete")
-                                if delete_button:
-                                    delete_catalog(item['_id'], item['name'], item['description'], headers)
-                                    
-
-            if create_btn:
-                create_catalog(headers)
-
-            if "deleted_catalog" in st.session_state and st.session_state.deleted_catalog:
-                catalog_id = st.session_state.deleted_catalog.get("catalog_id", "")
-                st.toast(f"Catalog '{catalog_id}' deleted.", icon='✅')
-                st.session_state.deleted_catalog = ""
-
-        
+        if create_btn:
+            create_catalog()
 
     if menu_id == get_translation('menu.userManagement'):
         st.header(f"{WEB_TITLE} - {get_translation('menu.userManagement')}")
-        refresh_button = st.button(get_translation("userManagement.refreshDataButton"))
-
-        if refresh_button:
-            st.rerun()
 
         tab1, tab2, tab3 = st.tabs([
             get_translation("userManagement.tab.listOfUsers"),
@@ -223,13 +210,15 @@ def show_web():
 
         with tab1:
             if verify_permission(Permissions.READ_USERS, st.session_state["access_token"]):
-                headers = {
-                    "Authorization": "Bearer " + st.session_state["access_token"]
-                }
-                response = requests.get(f"http://{USER_MANAGEMENT_API_BASE_URL}:8001/users", headers=headers)
+                list_of_users_response = requests.get(f"http://{USER_MANAGEMENT_API_BASE_URL}:8001/users", headers=get_headers())
+                list_of_users_response_json = list_of_users_response.json()
 
-                df = pd.DataFrame(response.json())
-                st.dataframe(df, use_container_width=True)
+                if list_of_users_response.ok:
+                    df = pd.DataFrame(list_of_users_response_json['detail'])
+                    st.dataframe(df, use_container_width=True)
+                else:
+                    st.error(list_of_users_response_json['detail'])
+
             else:
                 st.write(get_translation("userManagement.listOfUsers.noPermission"))
 
@@ -312,46 +301,29 @@ def show_web():
                             if set_language_permission:
                                 permissions.append(Permissions.SET_LANGUAGE.name)
 
-                            headers = {
-                                "Authorization": "Bearer " + st.session_state["access_token"]
-                            }
                             body = {
                                 "username": username,
                                 "password": password,
                                 "permissions": permissions
                             }
-                            response = requests.post(f"http://{USER_MANAGEMENT_API_BASE_URL}:8001/users", headers=headers, json=body)
-
-                            if response.ok:
-                                st.success(f"User '{username}' created successfully!")
-
-                            else:
-                                st.error(response.content, icon="⚠️")
+                            create_response = requests.post(f"http://{USER_MANAGEMENT_API_BASE_URL}:8001/users", headers=get_headers(), json=body)
+                            show_toast(create_response, f"User '{username}' created successfully!")
+                            st.rerun()
 
             else:
                 st.write(get_translation('userManagement.createUser.noPermission'))
 
         with tab3:
             if verify_permission(Permissions.DELETE_USERS, st.session_state["access_token"]):
-                headers = {
-                    "Authorization": "Bearer " + st.session_state["access_token"]
-                }
-
-                df = pd.DataFrame(response.json())
+                df = pd.DataFrame(list_of_users_response_json['detail'])
                 usernames = df["username"].tolist()
                 selected_user = st.selectbox(get_translation('userManagement.deleteUser.selectUser'), usernames)
 
                 if st.button(get_translation('userManagement.deleteUser.deleteButton'), type="primary"):
-                    if selected_user == verify_token(st.session_state['access_token'])["username"]:
-                        st.warning(get_translation("userManagement.deleteUser.errors.deleteOwnUser"), icon="⚠️")
-                    else:
-                        response = requests.delete(f"http://{USER_MANAGEMENT_API_BASE_URL}:8001/users", headers=headers, params={"username": selected_user})
+                    delete_response = requests.delete(f"http://{USER_MANAGEMENT_API_BASE_URL}:8001/users", headers=get_headers(), params={"username": selected_user})
+                    show_toast(delete_response, f"User '{selected_user}' deleted successfully!")
+                    st.rerun()
                         
-                        if response.ok:
-                            st.success(f"User '{selected_user}' deleted successfully!")
-
-                        else:
-                            st.error(response.content, icon="⚠️")
             else:
                 st.write(get_translation("userManagement.deleteUser.noPermission"))
 
@@ -360,10 +332,9 @@ def show_web():
 
         with st.form("Select language"):
             st.subheader(get_translation("language.form.header"))
-            headers = {
-                    "Authorization": "Bearer " + st.session_state["access_token"]
-            }
-            active_language = requests.get(f"http://{LANGUAGE_MANAGEMENT_API_BASE_URL}:8003/language", headers=headers).json(),
+            languages_response = requests.get(f"http://{LANGUAGE_MANAGEMENT_API_BASE_URL}:8003/language", headers=get_headers())
+            print(languages_response)
+            active_language = languages_response.json()['detail']
 
             def get_language_code(language_name, languages):
                 for language in languages:
@@ -393,18 +364,19 @@ def show_web():
             # Submit button
             submitted = st.form_submit_button(get_translation("language.form.submitButton"))
 
-            if submitted:
-                
-                response = requests.post(f"http://{LANGUAGE_MANAGEMENT_API_BASE_URL}:8003/language/?language={get_language_code(selected_language, languages)}", headers=headers).json()
-                if response:
+            if submitted:                
+                response = requests.post(f"http://{LANGUAGE_MANAGEMENT_API_BASE_URL}:8003/language/?language={get_language_code(selected_language, languages)}", headers=get_headers())
+                if response.ok:
                     update_translations(requests.get(f"http://{LANGUAGE_MANAGEMENT_API_BASE_URL}:8003/language/translations").json())
-                    st.rerun()          
-
+                    show_toast(response, f"Language updated to '{get_language_code(selected_language, languages)}'")
+                    st.rerun()
+                else:
+                    show_toast(response, f"Language updated to '{get_language_code(selected_language, languages)}'")
+                            
 
     if menu_id == get_translation('menu.logout'):
         st.session_state.clear()
         st.rerun()
-    
 
 def login():
     col1, col2, col3 = st.columns(3)
@@ -423,13 +395,13 @@ def login():
             try:
                 with st.spinner(get_translation("login.spinnerWait")):
                     res = requests.post(f"http://{USER_MANAGEMENT_API_BASE_URL}:8001/login/?username={username}&password={password}")
-                    if res.ok:
-                        response_content = res.json()
-                        st.session_state["access_token"] = response_content["access_token"]
-                        st.rerun()
-                                        
-                    if res.status_code == 404:
-                        st.error(res.json()["detail"], icon="⚠️")
+                    response_content_detail = res.json()["detail"]
+                    if res.ok:                        
+                        st.session_state["access_token"] = response_content_detail["access_token"]
+                        st.rerun()                                        
+                    else:
+                        st.error(response_content_detail, icon="⚠️")
+
             except Exception as e:
                 st.error(e, icon="⚠️")
 
@@ -439,3 +411,12 @@ if "access_token" not in st.session_state:
 
 if "access_token" in st.session_state:    
     show_web()
+
+if "toast" not in st.session_state:
+    st.session_state['toast'] = {}
+
+if st.session_state.toast != {}:
+    text = st.session_state.toast['text']
+    icon = st.session_state.toast['icon']
+    st.session_state['toast'] = {}
+    st.toast(icon=icon, body=text)
