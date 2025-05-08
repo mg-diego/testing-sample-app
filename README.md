@@ -3,6 +3,28 @@
 This is a sample application designed as a testing sandbox. The application is built to allow creation, viewing, and deletion, implemented using **FastAPI** for the backend and **Streamlit** for the frontend.
 
 ## Features
+### Login
+- Default user / password is `admin / admin`.
+- Error handling with wrong user / password combination.
+  
+### Catalog
+- Create new Catalog item.
+  - Name and description can't be empty.
+- Update existing Catalog item.
+  - Name and description can't be empty.
+- Delete existing Catalog item.
+- Filter by Catalog name.
+
+### User Management
+- Check list of Users.
+- Create new User.
+  -  
+- Delete existing user.
+  - You can't delete your own user.
+  - Default user `admin` can't be deleted. 
+
+### Language
+- Change app language to `EN`, `ES`, `PT`, `FR` and `JP`.
 
 ## Application Architecture
 
@@ -23,18 +45,28 @@ flowchart TD
         language-service["language-service"]
   end
  subgraph Databases["Databases"]
-        Posgresql["PostgreSQL"]
-        MongoDB["MongoDB"]
+        Posgresql["PostgreSQL
+        -------------
+        postgres:5432
+        db: testing-sample-app
+        user: user
+        password: password"]
+        MongoDB["MongoDB
+        -------------
+        mongodb://mongo:27017
+        db: testing-sample-app
+        collection: catalog"]
   end
     UI-service -- localhost:8001 --> user-service
     UI-service -- localhost:8002 --> catalog-service
     UI-service -- localhost:8003 --> language-service
     user-service --> Posgresql
-    catalog-service --> Posgresql
-    language-service --> MongoDB
-
+    catalog-service --> MongoDB
+    language-service --> Posgresql
     Posgresql@{ shape: cyl}
     MongoDB@{ shape: cyl}
+    style Posgresql color:#424242
+
 ```
 
 ### Backend

@@ -12,7 +12,7 @@ import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-ENVIRONMENT = "local"
+ENVIRONMENT = "DOCKER"
 WEB_TITLE = "🕵️ TESTING SAMPLE APP"
 
 CATALOG_API_BASE_URL = "catalog-management" if ENVIRONMENT == "DOCKER" else "localhost"
