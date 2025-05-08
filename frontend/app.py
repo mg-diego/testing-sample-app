@@ -12,7 +12,7 @@ import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-ENVIRONMENT = "DOCKER"
+ENVIRONMENT = "local"
 WEB_TITLE = "🕵️ TESTING SAMPLE APP"
 
 CATALOG_API_BASE_URL = "catalog-management" if ENVIRONMENT == "DOCKER" else "localhost"
@@ -33,7 +33,31 @@ def show_toast(response: requests.Response, custom_message):
 
 st.set_page_config(page_title=WEB_TITLE, layout="wide")
 st.markdown("""
-    <style>
+    <style>    
+            /* Tab container background */
+        div[data-testid="stTabs"] > div {
+            border-radius: 5px;
+            padding: 10px;
+        }
+
+        /* Active tab label */
+        button[data-baseweb="tab"] {
+            background-color: #e0e0e0;
+            border-radius: 5px 5px 0 0;
+            padding: 10px;
+            margin-right: 5px;
+        }
+
+        /* Hover effect */
+        button[data-baseweb="tab"]:hover {
+            background-color: #d0d0d0;
+        }
+
+        /* Selected tab label */
+        button[data-baseweb="tab"][aria-selected="true"] {
+            background-color: #c0c0c0;
+            font-weight: bold;
+        }   
         .footer {
             position: fixed;
             left: 0;
@@ -132,26 +156,15 @@ def details_catalog(catalog_id, catalog_name, catalog_description):
         st.rerun()
 
 def show_web():
-    menu_items = [sac.MenuItem(get_translation('menu.homepage'))]
-    if verify_permission(Permissions.ACCESS_CATALOG_MANAGEMENT, st.session_state["access_token"]):
-        menu_items.append(sac.MenuItem(get_translation('menu.catalog')))
+    homepage_tab, catalog_tab, user_management_tab, language_tab, logout_tab = st.tabs([
+            "Homepage",
+            "Catalog",
+            "User Management",
+            "Language",
+            "Logout"
+    ])
 
-    if verify_permission(Permissions.ACCESS_USER_MANAGEMENT, st.session_state["access_token"]):
-        menu_items.append(sac.MenuItem(get_translation('menu.userManagement')))
-
-    if verify_permission(Permissions.SET_LANGUAGE, st.session_state["access_token"]):
-        menu_items.append(sac.MenuItem(get_translation('menu.language')))
-
-    menu_items.append(sac.MenuItem(get_translation('menu.logout')))
-
-    with st.sidebar:
-        menu_id = sac.menu(
-            items=menu_items,
-            open_all=True,
-            index=0,
-        )
-        
-    if menu_id == get_translation('menu.homepage'):
+    with homepage_tab:
         st.header(f"{WEB_TITLE} - {get_translation('menu.homepage')}")
 
         st.markdown(f"""
@@ -165,8 +178,8 @@ def show_web():
             </ul>
             <p>{get_translation('homepage.paragraph2')}</p>
         """, unsafe_allow_html=True)
-        
-    if menu_id == get_translation('menu.catalog'):
+
+    with catalog_tab:
         st.header(f"{WEB_TITLE} - {get_translation('menu.catalog')}")
         first_search = True
 
@@ -201,7 +214,7 @@ def show_web():
         if create_btn:
             create_catalog()
 
-    if menu_id == get_translation('menu.userManagement'):
+    with user_management_tab:
         st.header(f"{WEB_TITLE} - {get_translation('menu.userManagement')}")
 
         tab1, tab2, tab3 = st.tabs([
@@ -329,7 +342,7 @@ def show_web():
             else:
                 st.write(get_translation("userManagement.deleteUser.noPermission"))
 
-    if menu_id == get_translation('menu.language'):
+    with language_tab:
         st.header(f"{WEB_TITLE} - {get_translation('menu.language')}")
 
         with st.form("Select language"):
@@ -374,7 +387,10 @@ def show_web():
                 show_toast(response, get_translation("language.toast.success") % get_language_code(selected_language, languages).upper())
                 st.rerun()
 
-    if menu_id == get_translation('menu.logout'):
+    with logout_tab:
+       st.header(f"{WEB_TITLE} - {get_translation('menu.logout')}")
+       logout_button = st.button(get_translation('menu.logout'), key="primary")
+       if logout_button:
         st.session_state.clear()
         st.rerun()
 
