@@ -25,7 +25,7 @@ def login_service(username, password):
             return { "status": HTTPStatus.OK, "detail": { "access_token": access_token, "token_type": "bearer" } }
         else:
             logger.info(f"[POST /login/] [400] - User login (wrong password): {username}")
-            return {"status": HTTPStatus.BAD_REQUEST, "detail": ErrorCode.USER_WRONG_PASSWORD.value}
+            return {"status": HTTPStatus.NOT_FOUND, "detail": ErrorCode.USER_WRONG_PASSWORD.value}
     else:
         if db_status.get('error') == "User not found.":
             logger.info(f"[POST /login/] [404] - User not found: {username}")

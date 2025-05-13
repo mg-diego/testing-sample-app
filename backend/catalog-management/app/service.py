@@ -23,7 +23,7 @@ def create_catalog_service(catalog: CatalogItem):
 
     if db_status.get("success"):
         logger.info(f"[POST /catalog/] [200] - Catalog created: {catalog}")
-        return {"status": HTTPStatus.OK, "detail": ""}
+        return {"status": HTTPStatus.OK, "detail": catalog.model_dump(by_alias=True)}
     else:
         logger.info(f"[POST /catalog/] [500] - Internal Server Error: {db_status.get('error', 'Unknown error')}")
         return {
@@ -55,7 +55,7 @@ def delete_catalog_service(catalog_id: str):
 
     if db_status.get("success"):
         logger.info(f"[DELETE /catalog/] - Catalog deleted: {catalog_id}")
-        return {"status": HTTPStatus.OK, "detail": ""}
+        return {"status": HTTPStatus.OK, "detail": catalog_id}
     else:
         if db_status.get("error") == 'No document matched the provided ID.':
             return {"status": HTTPStatus.NOT_FOUND, "detail": ErrorCode.NOT_FOUND.value}
@@ -78,7 +78,7 @@ def update_catalog_service(catalog: CatalogItem):
 
     if db_status.get("success"):
         logger.info(f"[PUT /catalog/] - Catalog updated: {catalog}")
-        return {"status": HTTPStatus.OK, "detail": ""}
+        return {"status": HTTPStatus.OK, "detail": catalog.model_dump(by_alias=True)}
     else:
         if db_status.get("error") == 'No document matched the provided ID.':
             return {"status": HTTPStatus.NOT_FOUND, "detail": ErrorCode.NOT_FOUND.value}
