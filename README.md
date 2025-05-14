@@ -30,15 +30,11 @@ Once running, the app will open in your default browser.
 - Default credentials: `admin / admin`
 - Error feedback on incorrect login
 
-![Login screen](./docs/img/login-screen.png)
-
 ### 📦 Catalog Management
 - **Create / Update** catalog items
   - Required: unique name & non-empty description
 - **Delete** catalog entries
 - **Filter** catalog by name
-
-![Catalog screen](./docs/img/catalog-screen.png)
 
 ### 👥 User Management
 - View list of users with sortable columns:
@@ -50,15 +46,11 @@ Once running, the app will open in your default browser.
 - **Delete** users
   - Admin user (`admin`) and self-deletion are restricted
 
-![User Management screen](./docs/img/user-management-screen.png)
-
 ### 🌐 Language Support
 - Instantly switch interface language:
   - `EN`, `ES`, `PT`, `FR` and `JP`.
 
-![Language screen](./docs/img/language-screen.png)
-
-## Application Architecture
+## 🏗️ Application Architecture
 
 The app follows a modular microservices design:
 
