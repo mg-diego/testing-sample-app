@@ -57,7 +57,6 @@
   "userManagement.deleteUser.noPermission": "O usuário atual não tem permissão para excluir usuários.",
   "userManagement.deleteUser.selectUser": "Selecione um usuário",
   "userManagement.deleteUser.deleteButton": "Excluir",
-  "userManagement.deleteUser.errors.deleteOwnUser": "Você não pode excluir seu próprio usuário.",
   "userManagement.deleteUser.toast.success": "Usuário '%s' excluído com sucesso.",
   "language.form.header": "Selecione o idioma",
   "language.form.submitButton": "Enviar",
@@ -80,5 +79,8 @@
   "errors.MISSING_PERMISSION": "O usuário não tem permissão necessária para realizar a ação.",
   "errors.UNKNOWN_ERROR": "Erro desconhecido.",
   "errors.USER_NOT_FOUND": "Usuário não encontrado.",
-  "errors.USER_WRONG_PASSWORD": "Senha incorreta."
+  "errors.USER_WRONG_PASSWORD": "Senha incorreta.",
+  "errors.ALREADY_EXIST": "Não pode ser criado, '%s' já existe.",
+  "errors.CANT_DELETE_ADMIN_USER": "O usuário administrador não pode ser excluído.",
+  "errors.CANT_DELETE_OWN_USER": "Você não pode excluir seu próprio usuário."
 }

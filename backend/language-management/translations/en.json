@@ -57,7 +57,6 @@
     "userManagement.deleteUser.noPermission": "The current user has no permission to delete users.",
     "userManagement.deleteUser.selectUser": "Select a user",
     "userManagement.deleteUser.deleteButton": "Delete",
-    "userManagement.deleteUser.errors.deleteOwnUser": "You can't delete your own user.",
     "userManagement.deleteUser.toast.success": "User '%s' successfully deleted.",
     "language.form.header": "Select Language",
     "language.form.submitButton": "Submit",
@@ -80,5 +79,8 @@
     "errors.MISSING_PERMISSION": "User does not have the required permission to perform the action.",
     "errors.UNKNOWN_ERROR": "Unknown error.",
     "errors.USER_NOT_FOUND": "User not found.",
-    "errors.USER_WRONG_PASSWORD": "Wrong password."
+    "errors.USER_WRONG_PASSWORD": "Wrong password.",
+    "errors.ALREADY_EXIST": "Can't be created, '%s' already exists.",
+    "errors.CANT_DELETE_ADMIN_USER": "The admin user can't be deleted.",
+    "errors.CANT_DELETE_OWN_USER": "You can't delete your own user."
 }

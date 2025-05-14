@@ -55,32 +55,48 @@ def create_user_service(user: User):
     if not user.username.strip():
         logger.info(f"[POST /users/] [400] - Username can't be empty: {user}")
         return {"status": HTTPStatus.BAD_REQUEST, "detail": ErrorCode.EMPTY_USERNAME.value}
-    
+
     if not user.password.strip():
         logger.info(f"[POST /users/] [400] - Password can't be empty: {user}")
         return {"status": HTTPStatus.BAD_REQUEST, "detail": ErrorCode.EMPTY_PASSWORD.value}
 
-    if len(user.permissions) == 0:
+    if not user.permissions:
         logger.info(f"[POST /users/] [400] - At least 1 permission should be assigned: {user}")
         return {"status": HTTPStatus.BAD_REQUEST, "detail": ErrorCode.NO_PERMISSION_ASSIGNED.value}
-    
-    db_status = user_management_database.create_user(user.username, user.password, user.permissions)
-    logger.debug(f"DB Status: {db_status}")
 
-    if db_status.get('success'):
-        logger.info(f"[POST /users/] [200] - User created: {user}")
-        return {"status": HTTPStatus.OK, "detail": ""}
-    else:
-        logger.info(f"[POST /users/] [500] - Internal Server Error: {db_status.get('error', ErrorCode.UNKNOWN_ERROR.value)}")
-        return {
-            "status": HTTPStatus.INTERNAL_SERVER_ERROR,
-            "detail": db_status.get("error", ErrorCode.UNKNOWN_ERROR.value)
-        }
+    db_user_list = user_management_database.get_user_list()
+    logger.info(f"DB User List: {db_user_list}")
+
+    if not db_user_list.get("success"):
+        error = db_user_list.get("error", ErrorCode.UNKNOWN_ERROR.value)
+        logger.info(f"[POST /users/] [500] - Internal Server Error: {error}")
+        return {"status": HTTPStatus.INTERNAL_SERVER_ERROR, "detail": error}
+
+    # Proceed if we got a successful response and list is not empty
+    if not any(db_user.get("username") == user.username for db_user in db_user_list.get("detail", [])):
+        db_status = user_management_database.create_user(user.username, user.password, user.permissions)
+        logger.debug(f"DB Status: {db_status}")
+
+        if db_status.get("success"):
+            logger.info(f"[POST /users/] [200] - User created: {user}")
+            return {"status": HTTPStatus.OK, "detail": ""}
+
+        error = db_status.get("error", ErrorCode.UNKNOWN_ERROR.value)
+        logger.info(f"[POST /users/] [500] - Internal Server Error: {error}")
+        return {"status": HTTPStatus.INTERNAL_SERVER_ERROR, "detail": error}
+
+    logger.info(f"[POST /users/] [409] - No existing users found or duplicate prevention logic needed.")
+    return {"status": HTTPStatus.CONFLICT, "detail": ErrorCode.ALREADY_EXIST.value}
+
 
 def delete_user_service(username: str):
     if username == "":
         logger.info(f"[DELETE /users/] [400] - Username can't be empty: {username}")
-        return {"status": HTTPStatus.BAD_REQUEST, "detail": ErrorCode.EMPTY_USERNAME.value}    
+        return {"status": HTTPStatus.BAD_REQUEST, "detail": ErrorCode.EMPTY_USERNAME.value}       
+    
+    if username.lower() == "admin":
+        logger.info(f"[POST /users/] [401] - Admin user can't be deleted: {username}")
+        return {"status": HTTPStatus.FORBIDDEN, "detail": ErrorCode.CANT_DELETE_ADMIN_USER.value}
   
     db_status = user_management_database.delete_user(username)
     logger.debug(f"DB Status: {db_status}")

@@ -53,7 +53,7 @@ def delete_user(username: str = Query(...), authorization: str = Header(...)):
 
     if verify_permission(Permissions.DELETE_USERS, token):
         if verify_token(token)['username'] == username:
-            raise HTTPException(status_code=403, detail="You can't delete your own user.")
+            raise HTTPException(status_code=403, detail=ErrorCode.CANT_DELETE_OWN_USER.value)
         return handle_response(delete_user_service(username))
     else:
         logger.warning(f"[DELETE /users/] - Permission denied. Token: {token}")

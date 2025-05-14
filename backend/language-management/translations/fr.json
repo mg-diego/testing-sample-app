@@ -57,7 +57,6 @@
   "userManagement.deleteUser.noPermission": "L'utilisateur actuel n'a pas l'autorisation de supprimer des utilisateurs.",
   "userManagement.deleteUser.selectUser": "Sélectionner un utilisateur",
   "userManagement.deleteUser.deleteButton": "Supprimer",
-  "userManagement.deleteUser.errors.deleteOwnUser": "Vous ne pouvez pas supprimer votre propre utilisateur.",
   "userManagement.deleteUser.toast.success": "Utilisateur '%s' supprimé avec succès.",
   "language.form.header": "Sélectionner la langue",
   "language.form.submitButton": "Soumettre",
@@ -80,5 +79,8 @@
   "errors.MISSING_PERMISSION": "L'utilisateur n'a pas l'autorisation requise pour effectuer cette action.",
   "errors.UNKNOWN_ERROR": "Erreur inconnue.",
   "errors.USER_NOT_FOUND": "Utilisateur non trouvé.",
-  "errors.USER_WRONG_PASSWORD": "Mot de passe incorrect."
+  "errors.USER_WRONG_PASSWORD": "Mot de passe incorrect.",
+  "errors.ALREADY_EXIST": "Impossible à créer, '%s' existe déjà.",
+  "errors.CANT_DELETE_ADMIN_USER": "L'utilisateur administrateur ne peut pas être supprimé.",
+  "errors.CANT_DELETE_OWN_USER": "Vous ne pouvez pas supprimer votre propre utilisateur."
 }

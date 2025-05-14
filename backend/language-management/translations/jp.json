@@ -57,7 +57,6 @@
   "userManagement.deleteUser.noPermission": "現在のユーザーにはユーザーを削除する権限がありません。",
   "userManagement.deleteUser.selectUser": "ユーザーを選択",
   "userManagement.deleteUser.deleteButton": "削除",
-  "userManagement.deleteUser.errors.deleteOwnUser": "自分自身のユーザーを削除することはできません。",
   "userManagement.deleteUser.toast.success": "ユーザー '%s' が正常に削除されました。",
   "language.form.header": "言語を選択",
   "language.form.submitButton": "送信",
@@ -80,5 +79,8 @@
   "errors.MISSING_PERMISSION": "この操作を実行するために必要な権限がありません。",
   "errors.UNKNOWN_ERROR": "不明なエラー。",
   "errors.USER_NOT_FOUND": "ユーザーが見つかりません。",
-  "errors.USER_WRONG_PASSWORD": "パスワードが間違っています。"
+  "errors.USER_WRONG_PASSWORD": "パスワードが間違っています。",
+  "errors.ALREADY_EXIST": "作成できません。'%s' は既に存在します。",
+  "errors.CANT_DELETE_ADMIN_USER": "管理者ユーザーは削除できません。",
+  "errors.CANT_DELETE_OWN_USER": "自分自身のユーザーを削除することはできません。"
 }
