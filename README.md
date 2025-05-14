@@ -1,34 +1,66 @@
-# Testing Sample App
+# 🕵️ Testing Sample App
+[![Docker Build](https://img.shields.io/badge/docker-ready-blue?logo=docker)](https://www.docker.com/)
+[![Streamlit](https://img.shields.io/badge/streamlit-ui-red?logo=streamlit)](https://streamlit.io/)
+[![FastAPI](https://img.shields.io/badge/fastapi-backend-green?logo=fastapi)](https://fastapi.tiangolo.com/)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](https://opensource.org/licenses/MIT)
+[![Language Support](https://img.shields.io/badge/i18n-EN%2FES%2FPT%2FFR%2FJP-yellow)](#-language-support)
 
-This is a sample application designed as a testing sandbox. The application is built to allow creation, viewing, and deletion, implemented using **FastAPI** for the backend and **Streamlit** for the frontend.
+Welcome to the **Testing Sample App** — a lightweight sandbox designed for experimenting with test automation. This app is perfect for testing UI interactions, API flows, and multilingual interfaces, built with a modern stack:
 
-## Features
-### Login
-- Default user / password is `admin / admin`.
-- Error handling with wrong user / password combination.
-  
-### Catalog
-- Create new Catalog item.
-  - Name and description can't be empty.
-- Update existing Catalog item.
-  - Name and description can't be empty.
-- Delete existing Catalog item.
-- Filter by Catalog name.
+- **Backend:** [FastAPI](https://fastapi.tiangolo.com/)
 
-### User Management
-- Check list of Users.
-- Create new User.
-  -  
-- Delete existing user.
-  - You can't delete your own user.
-  - Default user `admin` can't be deleted. 
+- **Frontend:** [Streamlit](https://streamlit.io/)
 
-### Language
-- Change app language to `EN`, `ES`, `PT`, `FR` and `JP`.
+
+## 🚀 Quick Start
+
+To run the application locally, you can use `docker-compose` to spin up all the necessary services. Make sure you have **Docker** and **Docker Compose** installed.
+
+   ```pwsh
+   Invoke-WebRequest "https://raw.githubusercontent.com/mg-diego/testing-sample-app/main/docker-compose.yml" -OutFile "docker-compose.yml"
+   docker-compose up -d
+   Start-Process "http://localhost:8501/?embed=True"
+   ```
+
+Once running, the app will open in your default browser.
+
+
+## ✨ Key Features
+### 🔐 Login
+- Default credentials: `admin / admin`
+- Error feedback on incorrect login
+
+![Login screen](./docs/img/login-screen.png)
+
+### 📦 Catalog Management
+- **Create / Update** catalog items
+  - Required: unique name & non-empty description
+- **Delete** catalog entries
+- **Filter** catalog by name
+
+![Catalog screen](./docs/img/catalog-screen.png)
+
+### 👥 User Management
+- View list of users with sortable columns:
+  - `Username`, `Password`, `Permissions`
+- **Create** new users with:
+  - Non-empty username/password
+  - At least one permission
+  - Unique username
+- **Delete** users
+  - Admin user (`admin`) and self-deletion are restricted
+
+![User Management screen](./docs/img/user-management-screen.png)
+
+### 🌐 Language Support
+- Instantly switch interface language:
+  - `EN`, `ES`, `PT`, `FR` and `JP`.
+
+![Language screen](./docs/img/language-screen.png)
 
 ## Application Architecture
 
-The application is divided into backend microservices, frontend and databases:
+The app follows a modular microservices design:
 
 ```mermaid
 ---
@@ -69,35 +101,46 @@ flowchart TD
 
 ```
 
-### Backend
+## ⚙️ Component Breakdown
+### 🧠 Backend (FastAPI)
+- `user-service`: Handles authentication, user creation, deletion, and permissions.
 
-The backend consists of **FastAPI** microservices:
-- **user-management**: Manages user authentication and CRUD operations for users.
-- **catalog-management**: Manages CRUD operations for catalog items.
-- **language-management**: Manages CRUD operations for language selection.
+- `catalog-service`: Manages catalog item creation, update, and deletion.
 
-### Frontend
+- `language-service`: Enables dynamic UI translation settings.
 
-The frontend is a **Streamlit** application that communicates with the backend through API calls. It allows users to interact with the system.
+### 🎨 Frontend (Streamlit)
 
-### Databases
+- Renders UI components
 
-- **postgresql**: PostgreSQL database to store user information and language information.
-- **mongodb**: MongoDB database to store catalog information.
+- Communicates with the backend via REST APIs
 
-### Features
+- Enforces permission-based visibility and actions
 
-- **User CRUD operations**: Create, read, update, and delete users / catalog items.
-- **Permissions handling**: Each user has associated permissions which can be validated before performing certain actions in both the FE and the BE.
-- **Internationalization**: The application can be used in `EN`, `ES`, `PT`, `FR` and `JP`.
+### 💾 Databases
 
-## Running the Application
+- **PostgreSQL:** Stores user credentials and language preferences.
 
-To run the application locally, you can use `docker-compose` to spin up all the necessary services. Make sure you have **Docker** and **Docker Compose** installed.
+- **MongoDB:** Stores catalog item data.
 
-   ```pwsh
-   Invoke-WebRequest "https://raw.githubusercontent.com/mg-diego/testing-sample-app/main/docker-compose.yml" -OutFile "docker-compose.yml"
-   docker-compose up -d
-   ```
+
+## 🌍 Internationalization
+Easily switch between:
+
+- 🇬🇧 English (EN)
+
+- 🇪🇸 Spanish (ES)
+
+- 🇵🇹 Portuguese (PT)
+
+- 🇫🇷 French (FR)
+
+- 🇯🇵 Japanese (JP)
+
+This is fully supported across both frontend and backend services.
+
+## 📬 Feedback & Contributions
+This app is a sandbox environment for testing and learning. Contributions, suggestions, and issue reports are welcome!
+
 
 
